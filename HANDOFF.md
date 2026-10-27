@@ -99,6 +99,18 @@ bash .ws/bin/ws_backup.sh                       # 元数据+脚本+工具区 tar
 > Agent 新会话开场会**自动查收 `.inbox/`**（规则已内置），待受理卡会被主动发现；
 > slug 自动生成时（`req-<时分秒>`），受理的 Agent 会与你确认更名后重建。
 
+**工作站侧一键入口**（Windows，IDE 为 VSCode 变体、自带 CLI 垫片）：
+
+```powershell
+# 桌面快捷方式目标：新窗口打开项目空间（SessionStart Hook 自动注入待受理卡）
+E:\CodeBuddy\install\CodeBuddy CN\bin\buddycn.cmd -n
+
+# 进阶：新窗口 + 直达信息卡原文（人工过目后再说受理）
+& "E:\CodeBuddy\install\CodeBuddy CN\bin\buddycn.cmd" -n -g ".inbox/<卡文件名>:1"
+```
+
+> CLI 无"预填对话首条消息"的参数——上下文注入由 SessionStart Hook 承担，两者互补。
+
 ### 5.1 你（workbuddy）要做的：生成「项目信息卡」
 
 从 pwb 的 tasks.db 记录映射出一张 YAML 卡，**贴给服务器侧的 CodeBuddy 对话**（或投递文件）：
