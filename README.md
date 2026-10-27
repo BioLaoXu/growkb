@@ -308,7 +308,20 @@ tar xzf .ws/backup/ws-meta-<日期>.tar.gz -C /tmp/ws_restore_test && ls -R /tmp
 - **`.kb/`**：`ws_kb.sh sync` 即远端备份，git log 就是历史
 - **`results/` 不进备份**：产物可重算或从生产 `Analysis/` 回捞，避免备份膨胀
 
----
+### 9.5 版本管理（GitOps）
+
+- 工作空间根已 git 化：版本化对象 = `.ws/bin` + `.ws/templates` + `.ws/docs` + `.codebuddy` + README/HANDOFF/CHANGELOG；**排除** projects/scratch（业务数据走 ws_backup）、`.ws/backup`、`.outbox`、`.kb`（独立仓库 growkb main 分支）
+- 远端：growkb 私库的 **`workspace` 分支**（`.kb/` 在同仓库的 `main` 分支，互不干扰）
+- 当前版本：**v2.0.0**（tag，2026-10-27 基线）——变更历史见 `CHANGELOG.md`
+- 语义化规则：架构变更 → v3；加脚本/功能 → v2.x；修 bug → v2.0.x
+- **改架构铁律：动任何结构前先 `git commit`（或至少 `git stash`），改完回归验证再 commit——每改一步都有回滚点**
+
+```bash
+git log --oneline                # 看历史
+git diff HEAD~1                  # 看上次改动
+git tag -a v2.1.0 -m "说明"      # 发新版本
+git push origin main:workspace --follow-tags   # 同步远端
+```
 
 ## 十、硬性约束
 

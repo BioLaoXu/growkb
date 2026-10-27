@@ -81,4 +81,5 @@ bash .ws/bin/ws_receipt.sh -T <任务> -s accepted|done|delivered   # 写回执�
 - 状态只写在 `.meta.yaml`；回执由脚本生成，**不要手工伪造 `.outbox/` 内容**。
 - 索引文件 `.index.md` 由脚本生成，不要手工编辑；备注写进 `.notes.md`。
 - 禁止删除 `projects/` 下任何内容（确需结项归档，须先向用户确认）。
+- **改工作空间结构前先提交**：目录/脚本/文档的结构性修改，动手前 `git commit`（根仓库，分支 workspace，排除 projects/scratch），改完回归验证再提交并打 tag（语义化：架构→主版本，功能→次版本，修复→补丁）。
 - **删除类操作前先备份元数据**：`bash .ws/bin/ws_backup.sh`（KB 级，秒级完成）—— 全套勾稽不能丢「客户需求」这类人工信息。
