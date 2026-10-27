@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "分析任务标准作业流程",
+    "subtitle": "一个任务目录 = 客户的一个需求批次，收尾刷新索引、写回执，再打包交付",
+    "output": "workspace-lifecycle.html"
+  },
+  "lanes": [
+    { "id": "intake", "label": "① 立项与归属" },
+    { "id": "exec", "label": "② 执行" },
+    { "id": "close", "label": "③ 收尾" },
+    { "id": "ship", "label": "④ 交付" }
+  ],
+  "nodes": [
+    { "id": "q", "lane": "intake", "col": 0, "type": "security", "label": "归属判定", "sublabel": "有合同号?", "width": 92, "tag": "根目录禁落盘" },
+    { "id": "newproj", "lane": "intake", "col": 2, "type": "backend", "label": "ws_new_project", "sublabel": "建项目+软链", "width": 120 },
+    { "id": "newtask", "lane": "intake", "col": 4, "type": "backend", "label": "ws_new_task", "sublabel": "建批次+META", "width": 120 },
+    { "id": "link", "lane": "exec", "col": 0, "type": "cloud", "label": "软链输入", "sublabel": "input.*", "width": 92, "tag": "禁止 cp" },
+    { "id": "code", "lane": "exec", "col": 2, "type": "frontend", "label": "写分析代码", "sublabel": "scripts/01_*.R", "width": 120 },
+    { "id": "out", "lane": "exec", "col": 4, "type": "database", "label": "产出结果", "sublabel": "results/ 结果与图", "width": 120 },
+    { "id": "meta", "lane": "close", "col": 0, "type": "backend", "label": "更新 META", "sublabel": "methods status", "width": 92 },
+    { "id": "index", "lane": "close", "col": 2, "type": "messagebus", "label": "ws_index.sh", "sublabel": "重建 .index.md", "width": 120 },
+    { "id": "receipt", "lane": "ship", "col": 0, "type": "messagebus", "label": "ws_receipt", "sublabel": "回执 .outbox/", "width": 92 },
+    { "id": "pack", "lane": "ship", "col": 2, "type": "database", "label": "ws_pack.sh", "sublabel": "打包 tar.gz", "width": 120 },
+    { "id": "deliver", "lane": "ship", "col": 4, "type": "external", "label": "ws_deliver.sh", "sublabel": "同步生产目录", "width": 120, "tag": "只做新增" }
+  ],
+  "edges": [
+    { "from": "q", "to": "newproj", "label": "有合同", "variant": "emphasis", "route": "straight" },
+    { "from": "newproj", "to": "newtask", "route": "straight" },
+    { "from": "newtask", "to": "link", "label": "开工", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop" },
+    { "from": "link", "to": "code", "route": "straight" },
+    { "from": "code", "to": "out", "route": "straight" },
+    { "from": "out", "to": "meta", "label": "收尾", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop" },
+    { "from": "meta", "to": "index", "route": "straight" },
+    { "from": "index", "to": "receipt", "label": "done 回执", "route": "straight" },
+    { "from": "receipt", "to": "pack", "route": "straight" },
+    { "from": "pack", "to": "deliver", "label": "-y 才写入", "variant": "security", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "立项", "items": ["任何产出必须先归属项目，禁止根目录散落", "判断不了归属就直接问用户合同号", "无合同任务走 scratch/<YYYYMM>/"] },
+    { "dot": "emerald", "title": "执行", "items": ["输入一律 ln -s，命名 input.*，放任务根目录", "脚本放 scripts/，结果与图放 results/，不混放", "单任务产出控制在 200MB 内"] },
+    { "dot": "rose", "title": "收尾与交付", "items": ["methods 字段必填，是索引检索的唯一依据", "ws_index.sh 刷新 .index.md；ws_receipt.sh 写 .outbox/ 回执给 pwb 对账", "ws_pack.sh 产出客户压缩包；ws_deliver.sh 默认预演，-y 才写入"] }
+  ]
+}

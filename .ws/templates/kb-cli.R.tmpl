@@ -1,0 +1,13 @@
+#!/usr/bin/env Rscript
+# kb_{{NAME}} —— {{TITLE}}（CLI 薄壳：只做参数解析，业务逻辑在 code/R/ 中）
+# 用法：Rscript kb_{{NAME}}.R --input <file> --output <out>
+suppressPackageStartupMessages(library(optparse))
+
+option_list <- list(
+  make_option("--input", type = "character", help = "输入文件路径（必填）"),
+  make_option("--output", type = "character", help = "输出文件路径（必填）")
+)
+opt <- parse_args(OptionParser(option_list = option_list))
+
+# TODO：source 对应的库函数并调用
+cat("TODO\n")

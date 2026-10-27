@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "工作空间目录管理架构",
+    "subtitle": "根目录只有 projects/ 与 scratch/ 是业务内容；工具·模板·台账·文档全部收在隐藏的 .ws/ 下",
+    "output": "workspace-tree.html"
+  },
+  "components": [
+    { "id": "root", "type": "backend", "label": "workspace/", "sublabel": "工作空间根", "pos": [40, 60], "size": [210, 60] },
+    { "id": "scratch", "type": "external", "label": "scratch/<YYYYMM>/", "sublabel": "无合同临时任务", "pos": [40, 610], "size": [210, 52] },
+
+    { "id": "wswrap", "type": "backend", "label": ".ws/", "sublabel": "隐藏：工具·模板·台账·文档", "pos": [40, 180], "size": [210, 60], "tag": "非业务内容" },
+    { "id": "wsbin", "type": "frontend", "label": "bin/", "sublabel": "八个脚本", "pos": [40, 270], "size": [100, 52] },
+    { "id": "wstpl", "type": "frontend", "label": "templates/", "sublabel": "META 模板", "pos": [150, 270], "size": [100, 52] },
+    { "id": "wsidx", "type": "database", "label": "INDEX.md", "sublabel": "全局索引", "pos": [40, 340], "size": [100, 52] },
+    { "id": "wsdocs", "type": "database", "label": "docs/", "sublabel": "架构图", "pos": [150, 340], "size": [100, 52] },
+    { "id": "wsledger", "type": "database", "label": "ledger/ws.db", "sublabel": "SQLite 台账 · 可 rebuild", "pos": [40, 410], "size": [210, 52], "tag": "派生镜像" },
+    { "id": "wsnap", "type": "database", "label": "ws_snapshot.db", "sublabel": "只读快照", "pos": [40, 490], "size": [210, 52], "tag": "VACUUM INTO" },
+
+    { "id": "proj", "type": "backend", "label": "projects/<产品>/<年>/<项目>", "sublabel": "项目锚点 · 映射生产目录", "pos": [330, 60], "size": [240, 60] },
+    { "id": "src", "type": "cloud", "label": "_source", "sublabel": "软链 → 生产目录", "pos": [330, 180], "size": [120, 52] },
+    { "id": "idxp", "type": "database", "label": "INDEX.md", "sublabel": "本项目批次清单", "pos": [470, 180], "size": [110, 52] },
+
+    { "id": "task", "type": "backend", "label": "<YYYYMMDD>_<slug>", "sublabel": "一个需求批次 b01/b02…", "pos": [630, 60], "size": [240, 60] },
+    { "id": "meta", "type": "database", "label": "META.yaml", "sublabel": "唯一必须文件", "pos": [630, 175], "size": [240, 52], "tag": "contract / batch" },
+    { "id": "scripts", "type": "frontend", "label": "scripts/", "sublabel": "脚本 R / py / sh", "pos": [630, 265], "size": [110, 52] },
+    { "id": "results", "type": "frontend", "label": "results/", "sublabel": "结果与图", "pos": [760, 265], "size": [110, 52] },
+    { "id": "inlink", "type": "cloud", "label": "input.* 软链", "sublabel": "根目录 · 不进包", "pos": [630, 335], "size": [240, 52] },
+    { "id": "pack", "type": "messagebus", "label": "交付包", "sublabel": "就地 · tar.gz / zip", "pos": [630, 415], "size": [240, 56], "tag": "ws_pack.sh" },
+
+    { "id": "board", "type": "frontend", "label": "personal-workbench", "sublabel": "本地看板 · 只读", "pos": [300, 610], "size": [220, 56] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": ".ws/ 隐藏区：工具 / 模板 / 索引 / 台账 / 图", "wraps": ["wswrap", "wsbin", "wstpl", "wsidx", "wsdocs", "wsledger", "wsnap"] },
+    { "kind": "security-group", "label": "任务目录内部：scripts/ 脚本、results/ 结果、交付包就地", "wraps": ["task", "meta", "scripts", "results", "inlink", "pack"] }
+  ],
+  "connections": [
+    { "from": "root", "to": "wswrap", "variant": "default", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "from": "root", "to": "scratch", "variant": "default", "fromSide": "left", "toSide": "left", "via": [[14, 90], [14, 636]] },
+    { "from": "root", "to": "proj", "label": "projects/", "variant": "emphasis", "fromSide": "right", "toSide": "left", "route": "straight" },
+    { "from": "proj", "to": "src", "variant": "default", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "from": "proj", "to": "idxp", "variant": "default", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "from": "proj", "to": "task", "label": "批次", "variant": "emphasis", "fromSide": "right", "toSide": "left", "route": "straight" },
+    { "from": "idxp", "to": "meta", "label": "扫描", "variant": "dashed", "fromSide": "right", "toSide": "left", "route": "straight" },
+    { "from": "meta", "to": "wsledger", "label": "ws_ledger.py sync", "variant": "emphasis", "fromSide": "bottom", "toSide": "right", "via": [[750, 730], [275, 730], [275, 436]] },
+    { "from": "task", "to": "pack", "label": "ws_pack.sh 就地", "variant": "dashed", "fromSide": "right", "toSide": "right", "via": [[985, 90], [985, 443]] },
+    { "from": "wsledger", "to": "wsnap", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "from": "wsnap", "to": "board", "label": "scp", "variant": "emphasis", "fromSide": "right", "toSide": "left", "route": "straight" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "根目录只有业务内容", "items": ["projects/ 合同制项目树、scratch/ 无合同任务、README.md 唯一入口", "工具与台账全部在 .ws/ 下，一眼分清哪棵是真数据", "项目目录名原样复制生产目录名，一一映射"] },
+    { "dot": "emerald", "title": "任务目录内部", "items": ["scripts/ 放脚本，results/ 放结果与图，META.yaml 唯一必须", "输入软链 input.* 放根目录，不进交付包", "交付包就地生成：单任务在任务目录，批次包在项目目录"] },
+    { "dot": "rose", "title": "台账是派生的", "items": [".ws/ledger/ws.db 只是 META.yaml 的镜像，删了 sync 就回来", "snapshot 导出只读副本 → scp 到本地 personal-workbench 看板", "改状态改 META.yaml 再 sync，不要手工改 DB"] }
+  ]
+}

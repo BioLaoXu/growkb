@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "工作空间目录结构与交付链路",
+    "subtitle": "一个任务目录 = 客户的一个需求批次，任务内固定 scripts/ 与 results/",
+    "output": "workspace-structure.html"
+  },
+  "components": [
+    {
+      "id": "prod",
+      "type": "external",
+      "label": "生产标准分析目录",
+      "sublabel": "/data/Report/<产品>_project_<年>",
+      "pos": [
+        40,
+        90
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "proj",
+      "type": "backend",
+      "label": "projects/<年>/<批次号>",
+      "sublabel": ".project.yaml + .source",
+      "pos": [
+        340,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "src",
+      "type": "cloud",
+      "label": ".source",
+      "sublabel": "软链",
+      "pos": [
+        340,
+        190
+      ],
+      "size": [
+        100,
+        52
+      ]
+    },
+    {
+      "id": "idx",
+      "type": "database",
+      "label": ".index.md",
+      "sublabel": "含按合同聚合",
+      "pos": [
+        470,
+        190
+      ],
+      "size": [
+        120,
+        52
+      ]
+    },
+    {
+      "id": "scratch",
+      "type": "external",
+      "label": "scratch/<YYYYMM>/",
+      "sublabel": "无合同临时任务",
+      "pos": [
+        340,
+        270
+      ],
+      "size": [
+        220,
+        52
+      ]
+    },
+    {
+      "id": "bin",
+      "type": "backend",
+      "label": ".ws/bin",
+      "sublabel": "管理脚本 · 备份/回执",
+      "pos": [
+        340,
+        430
+      ],
+      "size": [
+        230,
+        56
+      ]
+    },
+    {
+      "id": "task",
+      "type": "backend",
+      "label": "<YYYYMMDD>_<slug>",
+      "sublabel": "一个需求批次",
+      "pos": [
+        660,
+        90
+      ],
+      "size": [
+        220,
+        64
+      ]
+    },
+    {
+      "id": "meta",
+      "type": "database",
+      "label": ".meta.yaml",
+      "sublabel": "唯一必须文件",
+      "pos": [
+        660,
+        190
+      ],
+      "size": [
+        220,
+        52
+      ],
+      "tag": "contract / batch"
+    },
+    {
+      "id": "files",
+      "type": "frontend",
+      "label": "分层目录",
+      "sublabel": "scripts/ 与 results/",
+      "pos": [
+        660,
+        270
+      ],
+      "size": [
+        110,
+        52
+      ]
+    },
+    {
+      "id": "inlink",
+      "type": "cloud",
+      "label": "input.* 软链",
+      "sublabel": "不进交付包",
+      "pos": [
+        780,
+        270
+      ],
+      "size": [
+        100,
+        52
+      ]
+    },
+    {
+      "id": "pack",
+      "type": "messagebus",
+      "label": "交付包",
+      "sublabel": "就地 · tar.gz / zip",
+      "pos": [
+        660,
+        350
+      ],
+      "size": [
+        220,
+        56
+      ],
+      "tag": "ws_pack.sh"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "projects/ —— 合同制项目层",
+      "wraps": [
+        "proj",
+        "src",
+        "idx"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "任务目录内部：scripts/ 脚本、results/ 结果、交付包就地",
+      "wraps": [
+        "task",
+        "meta",
+        "files",
+        "inlink",
+        "pack"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "prod",
+      "to": "src",
+      "label": "ln -s 只读",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "orthogonal-h"
+    },
+    {
+      "from": "proj",
+      "to": "task",
+      "label": "ws_new_task.sh",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "from": "idx",
+      "to": "meta",
+      "label": "扫描",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "from": "task",
+      "to": "pack",
+      "label": "ws_pack.sh",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "right",
+      "via": [
+        [
+          930,
+          122
+        ],
+        [
+          930,
+          378
+        ]
+      ]
+    },
+    {
+      "from": "bin",
+      "to": "pack",
+      "label": "只含常规文件",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "映射规则",
+      "items": [
+        "一级 = 年份分目录，二级 = 工作台批次编号",
+        "product/year/site 记在 .project.yaml，建任务自动带入 META",
+        "contract 与 batch 由脚本自动推导，不要手改"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "目录约定",
+      "items": [
+        "任务目录固定 scripts/ 与 results/ 两个子目录",
+        ".meta.yaml 唯一必须，输入软链不进交付包",
+        "交付包就地生成：跟着任务走，不在别处找"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "空间与硬约束",
+      "items": [
+        "输入一律软链，单任务产出控制在 200MB 内",
+        "打包自动排除软链与已有包（避免自我嵌套）",
+        "同名包直接报错不覆盖；done/delivered 产物重做加 -v2"
+      ]
+    }
+  ]
+}

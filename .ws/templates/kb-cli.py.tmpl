@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""kb_{{NAME}} —— {{TITLE}}（CLI 薄壳：只做参数解析，业务逻辑在 code/python/ 中）
+
+用法：
+    kb_{{NAME}}.py --input <tsv> --output <out>
+"""
+import argparse
+import sys
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--input', required=True, help='输入文件路径（必填）')
+    parser.add_argument('--output', required=True, help='输出文件路径（必填）')
+    args = parser.parse_args(argv)
+    # TODO：调用 code/python/<主题>/ 中的库函数
+    print('TODO', file=sys.stderr)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
