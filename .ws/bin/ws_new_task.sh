@@ -69,10 +69,10 @@ else
   if [[ -f "$pj" ]]; then
     product="$(read_project_field "$pj" product)"
     py_contract="$(read_project_field "$pj" contract)"
-    py.source="$(read_project_field "$pj" source_dir)"
+    py_source="$(read_project_field "$pj" source_dir)"
   else
     warn "项目缺少 .project.yaml（旧结构或手工创建），product 将留空"
-    product=""; py_contract=""; py.source=""
+    product=""; py_contract=""; py_source=""
   fi
 
   # 合同号：-c 显式 > .project.yaml > 从批次号/site 推导兜底
@@ -85,8 +85,8 @@ else
   fi
 
   # 生产目录：.project.yaml > .source 软链 > 未匹配
-  if [[ -n "$py.source" && "$py.source" != "null" ]]; then
-    source_dir="$py.source"
+  if [[ -n "$py_source" && "$py_source" != "null" ]]; then
+    source_dir="$py_source"
   elif [[ -L "$parent_abs/.source" ]]; then
     source_dir="$(readlink "$parent_abs/.source")"
   else

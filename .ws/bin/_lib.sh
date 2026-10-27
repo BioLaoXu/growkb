@@ -92,3 +92,17 @@ count_tasks() {
 }
 
 usage_die() { printf '%s\n' "$1" >&2; exit 1; }
+
+# 读取项目级 .project.yaml 的一个字段（文件不存在或字段为空都返回空串）
+read_project_field() {
+  python3 - "$1" "$2" <<'PYEOF'
+import sys
+try:
+    import yaml
+    d = yaml.safe_load(open(sys.argv[1], encoding='utf-8')) or {}
+    v = d.get(sys.argv[2])
+    print('' if v is None else v)
+except Exception:
+    print('')
+PYEOF
+}

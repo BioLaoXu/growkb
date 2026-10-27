@@ -64,6 +64,17 @@ bash .ws/bin/ws_receipt.sh -T <任务> -s accepted|done|delivered   # 写回执�
 
 用户问"这个项目做过哪些分析""之前那个 motif 分析在哪"时，先跑上述命令再结合 `.index.md` 回答。
 
+## 六A、会话开场：先查收件箱
+
+任何新会话开始（或用户说"有新任务吗/受理"）时，**第一步**执行：
+
+```bash
+ls -1t .inbox/*_dispatch.yaml 2>/dev/null | head -5
+```
+
+有待受理卡则按第七节流程处理（卡里已含 batch/contract/product/需求与 taskPath）；
+没有则正常进入对话。这是 pwb → CodeBuddy 提单链路的接收入口。
+
 ## 七、pwb 提单受理（项目信息卡）
 
 用户会从 personal-workbench 把「项目信息卡」贴进对话，格式见 README 第七节（batch/contract/product 必填，site 或 source_dir 二选一）。受理流程：
