@@ -31,6 +31,7 @@
 │       └── 92512126902_peak-anno_20261027.tar.gz   # 交付包（就地生成）
 ├── scratch/202610/...                    # 无合同归属的临时任务（结构同上）
 ├── .outbox/                              # 回执：accepted/done/delivered，给 pwb 对账
+├── .inbox/                               # 收件箱：待受理的「项目信息卡」（pwb 可 scp 投递，Agent 新会话自动查收）
 ├── .kb/                                  # 代码+文档知识库（GitHub 私库 growkb 同步）
 │   ├── code/R/<主题>/*.R                 #   R 函数（Roxygen Skeleton，一函数一文件）
 │   ├── code/python/<主题>/*.py           #   Python 模块（Google docstring）
@@ -61,7 +62,11 @@
 ## 四、管理命令速查（均在 `.ws/bin/`）
 
 ```bash
-# 建项目 / 建任务
+# 一键发起（建项目如缺 + 建任务 + 生成信息卡到 .inbox/）
+bash .ws/bin/ws_dispatch.sh -b <批次号> -p <产品> -s <生产目录名> -r "<需求>" [-t slug] [-d YYYYMMDD]
+#    （或 -f <生产目录全路径>；-d 自选任务日期前缀；slug 缺省自动生成）
+
+# 建项目 / 建任务（分开操作时）
 bash .ws/bin/ws_new_project.sh -b <批次号> -p <产品> [-y <年>] -s <生产目录名>   # 或 -f <全路径>
 bash .ws/bin/ws_new_task.sh -P projects/<年>/<批次号> -t <slug> -r "<需求>"      # -d 日期可自选
 
@@ -82,6 +87,17 @@ bash .ws/bin/ws_backup.sh                       # 元数据+脚本+工具区 tar
 ```
 
 ## 五、对接协议（核心）
+
+### 5.0 发起通道（三选一）
+
+| 通道 | 流程 | 适用 |
+|---|---|---|
+| A. 工作台投递 | pwb 生成信息卡 → `scp 卡.yaml xufa@<服务器>:/data/Agent/xufa/workspace/.inbox/` → 打开 CodeBuddy 新会话说「受理 <卡文件名>」 | 推荐的自动化路径 |
+| B. 服务器命令行 | `ws_dispatch.sh -b <批次号> -p <产品> -s <生产目录名> -r "<需求>"`（自动建项目/任务 + 生成卡到 .inbox/） | 服务器上直接操作 |
+| C. 对话粘贴 | 把信息卡直接贴进 CodeBuddy 对话 | 最简单 |
+
+> Agent 新会话开场会**自动查收 `.inbox/`**（规则已内置），待受理卡会被主动发现；
+> slug 自动生成时（`req-<时分秒>`），受理的 Agent 会与你确认更名后重建。
 
 ### 5.1 你（workbuddy）要做的：生成「项目信息卡」
 
