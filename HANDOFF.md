@@ -99,7 +99,7 @@ bash .ws/bin/ws_backup.sh                       # 元数据+脚本+工具区 tar
 > Agent 新会话开场会**自动查收 `.inbox/`**（规则已内置），待受理卡会被主动发现；
 > slug 自动生成时（`req-<时分秒>`），受理的 Agent 会与你确认更名后重建。
 
-**工作站侧一键入口**（Windows，IDE 为 VSCode 变体、自带 CLI 垫片）：
+**工作站侧一键入口**（Windows，IDE 为 VSCode 变体、自带 CLI 垫片 `buddycn.cmd`，版本 1.106.1）：
 
 ```powershell
 # 桌面快捷方式目标：新窗口打开项目空间（SessionStart Hook 自动注入待受理卡）
@@ -107,9 +107,14 @@ E:\CodeBuddy\install\CodeBuddy CN\bin\buddycn.cmd -n
 
 # 进阶：新窗口 + 直达信息卡原文（人工过目后再说受理）
 & "E:\CodeBuddy\install\CodeBuddy CN\bin\buddycn.cmd" -n -g ".inbox/<卡文件名>:1"
+
+# 终极：chat 子命令——传入 prompt 直接运行一个会话（官方能力，待验证其工作目录解析）
+& "E:\CodeBuddy\install\CodeBuddy CN\bin\buddycn.cmd" chat "受理 .inbox/ 中的待受理分析请求；没有则告知"
 ```
 
-> CLI 无"预填对话首条消息"的参数——上下文注入由 SessionStart Hook 承担，两者互补。
+> CLI 无"预填对话首条消息"的参数，但 **`chat` 子命令**本质上就是这件事（prompt 随启动传入），
+> 与 SessionStart Hook 互补：Hook 保证上下文，`chat` 免掉手打第一句话。
+> 待验证：`chat` 在 Windows 本地目录运行时，能否落到服务器工作空间（取决于 IDE 的远程机制）。
 
 ### 5.1 你（workbuddy）要做的：生成「项目信息卡」
 
