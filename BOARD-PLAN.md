@@ -54,6 +54,14 @@ P2 后端版（1-2 天）：
 
 P3 附加：[开工] 按钮直连 buddycn chat（待 chat 远程目录验证）。
 
+## 五A、SQLite 派生缓存（P1 已实装）
+
+- P1 采用「磁盘扫描 → `.ws/board/board.db`（SQLite 派生缓存）→ `index.html`（对缓存一次查询的渲染）」三段式
+- `board.db` 定位：**可重建的查询加速层**，不是事实来源（事实仍在 META/收件箱）；删除无损，`ws_board.sh` 一条命令重建
+- 提供表：`tasks`（15 列，含 year 派生列）/ `cards`（11 列，含 state 对账与 dup 重复标记）/ `meta`（board_version/generated_at/计数）
+- SQL 直查：`sqlite3 .ws/board/board.db "SELECT * FROM tasks WHERE status='wip'"`
+- 何时进化为常驻 P2 后端：需要「点击即受理」时（见方案二），缓存层与扫描代码全部复用
+
 ## 六、风险与边界
 
 - 看板只读项目数据；P2 写操作仅触发既有脚本（自带不覆盖/先问保护），不引入第二事实源
