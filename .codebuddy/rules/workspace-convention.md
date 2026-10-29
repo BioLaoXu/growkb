@@ -84,6 +84,7 @@ ls -1t .inbox/*_dispatch.yaml 2>/dev/null | head -5
 3. `ws_new_task.sh` 建任务（信息卡带 date 时加 `-d`），META 自动填 contract/product/batch；再补 `sample_batch`、`species`、`request` 原文与 `notes`；
 4. 信息卡里的 `inputs` 逐条 `ln -s` 成 `input.*`（目标不存在要先问）；
 5. `ws_receipt.sh -T <任务> -s accepted` 写受理回执；收尾、交付时再补 `done` / `delivered` 回执；
+6. **受理后归档信息卡**：把 `.inbox/<卡文件>` 移入 `.inbox/accepted/`（避免已受理的卡滞留收件箱；看板对账也会自动归档，但主动归档优先）。
 6. 信息卡字段有歧义（如 slug 撞名、产品未知）时**先问再建**，不要自作主张。
 
 ## 八、不可变约定
