@@ -13,3 +13,6 @@
 ## 2026-10-29 — feat: 智能体深度调研（BioMedAgent/BioMaster/PromptBio 等 16 生信 + 10 通用，含框架与边界）
 - 变更文件：2
 
+## 2026-10-29 — feat: Project MEMEX 知识记忆体立项 + ControlTower 看板评估规划
+- 变更文件：2
+
