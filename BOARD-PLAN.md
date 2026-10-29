@@ -26,6 +26,12 @@
 
 推荐两阶段：P1 满足"看得见"，P2 满足"点得动"，共用同一份扫描代码。
 
+> **状态更新（2026-10-29）：P1+P2 已合并交付** —— `.ws/bin/ws_board.py` 单进程双职能
+> （静态托管 + /api/state + create/update/delete/accept/ignore/deliver 全部写 API），
+> 前端为可筛选数据表格（行内改状态/需求、删除仅 planned 且入 .trash/ 回收站、
+> 新建表单、底部汇总），服务由 `.ws/bin/ws_board.sh start|stop|restart` 管理，
+> 绑定 127.0.0.1，替换了原 8792 纯静态服务。实测闭环：create→update→delete→删除防护全通过。
+
 ## 三、"点击启动"的三种语义（P2 按钮分层）
 
 1. [受理]（卡→任务）：POST /api/accept → 执行 ws_new_project/new_task（卡含 taskPath 则跳过）+ ws_receipt.sh accepted

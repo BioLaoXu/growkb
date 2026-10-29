@@ -1,26 +1,52 @@
 #!/usr/bin/env python3
-"""ControlTower 看板生成器：磁盘扫描 → SQLite 派生缓存(board.db) → 静态看板(index.html)。
+"""ControlTower P2 动态看板服务（单进程双职能，绑定 127.0.0.1）。
 
-board.db 是可重建的查询缓存（删除无损，META.yaml 仍是唯一事实）；
-index.html 是对 board.db 一次查询的渲染产物。刷新 = 重跑本脚本。
+  GET  /                看板页（每次请求实时渲染，无生成步骤）
+  GET  /api/state       任务/卡片/概览 JSON
+  GET  /<静态路径>       工作空间内静态文件（README、.ws/docs…）
+  POST /api/create      新建任务（等价 ws_dispatch：建项目如缺 + 建任务 + 回执）
+  POST /api/delete      删除任务（仅 planned；移入 .trash/ 回收站，非真删）
+  POST /api/accept      受理信息卡
+  POST /api/ignore      忽略信息卡
+  POST /api/deliver     打包 + 交付回执
+写操作仅调用既有 ws_* 脚本（复用全部保护），不引入第二事实源。
 """
-import html, json, os, re, glob, sqlite3, sys, datetime
+import json, os, glob, re, shutil, subprocess, sys, datetime
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.dont_write_bytecode = True
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, '.ws/bin'))
 sys.path.insert(0, os.path.join(ROOT, '.codebuddy/hooks'))
 from ws_meta import scan
 from check_inbox import parse_card
 
-BOARD_DIR = os.path.join(ROOT, '.ws/board')
-DB = os.path.join(BOARD_DIR, 'board.db')
+PORT = 8792
+BIND = '127.0.0.1'
+INBOX = os.path.join(ROOT, '.inbox')
+TRASH = os.path.join(ROOT, '.trash')
+TODAY = datetime.date.today().strftime('%Y%m%d')
 
-def collect_cards():
+def run(args):
+    r = subprocess.run(args, cwd=ROOT, capture_output=True, text=True, timeout=600)
+    tail = (r.stdout + '\n' + r.stderr).strip().splitlines()[-6:]
+    return r.returncode, '\n'.join(tail)
+
+def scan_tasks():
+    _, tasks = scan(ROOT)
+    keys = ('task_id','rel_path','project_rel','contract','batch','status',
+            'packed','updated','product','species','request','methods')
     out = []
-    for p in sorted(glob.glob(os.path.join(ROOT, '.inbox', '*_dispatch.yaml')), reverse=True):
-        c = parse_card(p)
-        c['file'] = os.path.basename(p)
+    for t in tasks:
+        d = {k: t.get(k) for k in keys}
+        d['request'] = (d.get('request') or '').replace('\n',' ')[:70]
+        out.append(d)
+    return out
+
+def list_cards():
+    out = []
+    for p in sorted(glob.glob(os.path.join(INBOX,'*_dispatch.yaml')), reverse=True):
+        c = parse_card(p); c['file'] = os.path.basename(p)
         tp = c.get('taskPath') or ''
         tdir = os.path.join(ROOT, tp) if tp else ''
         st = None
@@ -30,160 +56,200 @@ def collect_cards():
                 m = re.search(r'^status:\s*(\S+)', open(mp, encoding='utf-8').read(), re.M)
                 st = m.group(1) if m else None
         c['task_status'] = st
-        c['state'] = ('in-progress' if st in ('wip', 'done', 'delivered')
+        c['state'] = ('in-progress' if st in ('wip','done','delivered')
                       else 'created' if st == 'planned' else 'new')
         out.append(c)
-    for c in out:
-        if c['state'] == 'new':
-            c['dup'] = sum(1 for x in out if x['state'] == 'new'
-                           and x.get('batch') == c.get('batch')
-                           and x.get('slug') == c.get('slug')) > 1
     return out
 
-def collect_tasks():
-    _, tasks = scan(ROOT)
-    keys = ('task_id', 'rel_path', 'project_rel', 'contract', 'batch', 'status',
-            'packed', 'updated', 'product', 'species', 'request', 'methods')
-    out = []
-    for t in tasks:
-        d = {k: t.get(k) for k in keys}
-        d['request'] = (d.get('request') or '')[:200]
-        out.append(d)
-    return out
+def overview(tasks, cards):
+    st = {}
+    for t in tasks: st[t['status']] = st.get(t['status'],0)+1
+    new = [c for c in cards if c['state']=='new']
+    return {'projects': len({t['project_rel'] for t in tasks if t['project_rel']}),
+            'tasks': len(tasks), 'by_status': st,
+            'pending_cards': len(new),
+            'duplicates': [c['file'] for c in new
+                           if sum(1 for x in new if x.get('batch')==c.get('batch')
+                                  and x.get('slug')==c.get('slug')) > 1]}
 
-def build_db(tasks, cards):
-    os.makedirs(BOARD_DIR, exist_ok=True)
-    if os.path.exists(DB):
-        os.remove(DB)
-    db = sqlite3.connect(DB)
-    db.executescript('''
-CREATE TABLE tasks(
-  taskPath TEXT PRIMARY KEY, taskId TEXT, year TEXT, batch TEXT, projectRel TEXT,
-  contractNo TEXT, productName TEXT, speciesName TEXT, sampleBatch TEXT,
-  status TEXT, request TEXT, methods TEXT, sourceDir TEXT, packed TEXT, updatedAt TEXT);
-CREATE TABLE cards(
-  file TEXT PRIMARY KEY, batch TEXT, contract TEXT, product TEXT, slug TEXT,
-  date TEXT, request TEXT, taskPath TEXT, taskStatus TEXT, state TEXT, dup INTEGER);
-CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT);
-''')
-    for t in tasks:
-        year = (t['rel_path'].split('/')[1] if t['rel_path'].startswith('projects/') else None)
-        db.execute('INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (
-            t['rel_path'], t['task_id'], year, t.get('batch'), t.get('project_rel'),
-            t.get('contract'), t.get('product'), t.get('species'), None, t.get('status'),
-            t.get('request'), json.dumps(t.get('methods'), ensure_ascii=False),
-            t.get('source_dir'), t.get('packed'), t.get('updated')))
-    for c in cards:
-        db.execute('INSERT INTO cards VALUES(?,?,?,?,?,?,?,?,?,?,?)', (
-            c['file'], c.get('batch'), c.get('contract'), c.get('product'),
-            c.get('slug'), c.get('date'), c.get('request'), c.get('taskPath'),
-            c.get('task_status'), c['state'], int(bool(c.get('dup')))))
-    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    db.executemany('INSERT INTO meta VALUES(?,?)', [
-        ('board_version', '1'), ('generated_at', now),
-        ('task_count', str(len(tasks))), ('card_count', str(len(cards)))])
-    db.commit()
-    return db
+class Handler(SimpleHTTPRequestHandler):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, directory=ROOT, **kw)
 
-def render(db):
-    tasks = db.execute('SELECT * FROM tasks ORDER BY updatedAt DESC').fetchall()
-    tcols = [r[0] for r in db.execute('PRAGMA table_info(tasks)').description] \
-        if False else ['taskPath','taskId','year','batch','projectRel','contractNo',
-                       'productName','speciesName','sampleBatch','status','request',
-                       'methods','sourceDir','packed','updatedAt']
-    tasks = [dict(zip(tcols, t)) for t in tasks]
-    ccols = ['file','batch','contract','product','slug','date','request',
-             'taskPath','taskStatus','state','dup']
-    cards = [dict(zip(ccols, c)) for c in
-             db.execute('SELECT * FROM cards ORDER BY file DESC').fetchall()]
-    meta = dict(db.execute('SELECT key, value FROM meta').fetchall())
+    def _json(self, obj, code=200):
+        body = json.dumps(obj, ensure_ascii=False, default=str).encode('utf-8')
+        self.send_response(code)
+        self.send_header('Content-Type','application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
-    def esc(s):
-        return html.escape(str(s if s is not None else '—'))
-    def task_row(t, actions):
-        st = t['status']; color = {'wip':'#f59e0b','planned':'#60a5fa','blocked':'#ef4444',
-                                   'done':'#10b981','delivered':'#10b981'}.get(st, '#9ca3af')
-        btns = ''.join('<button onclick="cp(%s)">%s</button>' % (json.dumps(a[1]), a[0]) for a in actions)
-        return ('<tr><td><span class="tag" style="background:%s">%s</span></td>'
-                '<td><b>%s</b><br><small>%s</small></td><td>%s</td>'
-                '<td><small>%s</small></td><td>%s</td></tr>') % (
-            color, esc(st), esc(t['taskId']), esc(t['batch']), esc(t['contractNo']),
-            esc(t['updatedAt']), esc(t['request']) + btns)
+    def do_GET(self):
+        path = self.path.split('?')[0]
+        if path == '/api/state':
+            tasks = scan_tasks(); cards = list_cards()
+            return self._json({'tasks':tasks,'cards':cards,
+                               'overview':overview(tasks,cards),
+                               'server_time':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+        if path == '/':
+            self.path = '/.ws/board/index.html'
+        return SimpleHTTPRequestHandler.do_GET(self)
 
-    new = [c for c in cards if c['state'] == 'new']
-    created = [c for c in cards if c['state'] == 'created']
-    prog = [t for t in tasks if t['status'] in ('wip', 'blocked')]
-    planned = [t for t in tasks if t['status'] == 'planned']
-    fin = [t for t in tasks if t['status'] in ('done', 'delivered')]
+    def do_POST(self):
+        path = self.path.split('?')[0]
+        table = {'/api/create':self.api_create,'/api/update':self.api_update,
+                 '/api/delete':self.api_delete,'/api/accept':self.api_accept,
+                 '/api/ignore':self.api_ignore,'/api/deliver':self.api_deliver}
+        fn = table.get(path)
+        if not fn: return self._json({'ok':False,'error':'未知接口 '+path},404)
+        try:
+            n = int(self.headers.get('Content-Length',0))
+            body = json.loads(self.rfile.read(n) or b'{}')
+        except Exception:
+            return self._json({'ok':False,'error':'请求体不是合法 JSON'},400)
+        try:
+            return self._json(fn(body))
+        except Exception as e:
+            return self._json({'ok':False,'error':'服务器异常：%s' % e},500)
 
-    def card_row(c):
-        dup = ' <b style="color:#f59e0b">疑似重复</b>' if c['dup'] else ''
-        cmd = 'buddycn chat "受理 .inbox/%s"' % c['file']
-        return ('<tr><td><b>%s</b>%s<br><small>合同 %s · 产品 %s</small></td>'
-                '<td><small>%s</small></td><td><small>%s</small></td>'
-                '<td><button onclick="cp(%s)">复制受理命令</button>'
-                '<button onclick="cp(%s)">scp 投递命令</button></td></tr>') % (
-            esc(c['batch']), dup, esc(c['contract']), esc(c['product']),
-            esc((c.get('request') or '')[:80]), esc(c['date'] or '—'),
-            json.dumps(cmd), json.dumps('bash .ws/bin/ws_dispatch.sh -h  # 或 scp 卡到服务器 .inbox/'))
+    EDITABLE = ('status','request','notes','species','sample_batch')
+    STATUS = ('planned','wip','blocked','done','delivered')
 
-    def trow_group(rows, actions_fn):
-        return ''.join(task_row(t, actions_fn(t)) for t in rows) if rows else ''
+    def api_update(self, b):
+        """行内编辑：只允许白名单字段；改 META.yaml（唯一事实）后刷新索引。"""
+        tp = (b.get('task') or '').strip('/')
+        field = b.get('field'); value = str(b.get('value') or '').strip()
+        tdir = os.path.join(ROOT, tp)
+        if field not in self.EDITABLE:
+            return {'ok':False,'error':'字段不可编辑：'+str(field)}
+        if not tp or not os.path.isfile(os.path.join(tdir,'.meta.yaml')):
+            return {'ok':False,'error':'任务不存在：'+tp}
+        if field == 'status' and value not in self.STATUS:
+            return {'ok':False,'error':'非法状态：'+value}
+        if not value:
+            return {'ok':False,'error':'值不能为空'}
+        mp = os.path.join(tdir,'.meta.yaml')
+        s = open(mp, encoding='utf-8').read()
+        if re.search(r'^%s:' % field, s, re.M):
+            s = re.sub(r'^%s:.*$' % field, '%s: %s' % (field, value), s, flags=re.M)
+        else:
+            s = s.replace('updated:', '%s: %s\nupdated:' % (field, value), 1)
+        open(mp,'w',encoding='utf-8').write(s)
+        subprocess.run(['bash',ROOT+'/.ws/bin/ws_index.sh'], cwd=ROOT, capture_output=True)
+        return {'ok':True,'note':'%s 已更新为 %s' % (field, value)}
 
-    data = json.dumps({'tasks': tasks, 'cards': cards}, ensure_ascii=False)
-    page = '''<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
-<title>ControlTower · 工作空间看板</title><style>
-body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#0f172a;color:#e2e8f0;
-margin:0;padding:24px;max-width:1100px;margin:0 auto}
-h1{font-size:1.5em} h2{font-size:1.1em;margin:28px 0 10px;border-bottom:1px solid #334155;padding-bottom:6px}
-.tag{padding:2px 8px;border-radius:4px;font-size:.8em;color:#0f172a}
-table{width:100%%;border-collapse:collapse;margin:8px 0}
-td,th{padding:8px 10px;border-bottom:1px solid #1e293b;vertical-align:top;text-align:left;font-size:.92em}
-small{color:#94a3b8} button{background:#1e293b;color:#93c5fd;border:1px solid #334155;
-border-radius:4px;padding:4px 10px;cursor:pointer;font-size:.85em;margin:2px}
-button:hover{background:#334155}
-.ov{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
-.ov div{background:#1e293b;border-radius:8px;padding:10px 18px;text-align:center}
-.ov b{display:block;font-size:1.6em}
-.mut{color:#64748b;font-size:.85em}
-</style></head><body>
-<h1>🛫 ControlTower · 工作空间看板</h1>
-<p class="mut">生成于 %(now)s · 数据源：磁盘 .meta.yaml + .inbox/（board.db 为派生缓存，可随时重建）</p>
-<div class="ov">
-<div><b>%(np)d</b>待受理卡</div><div><b>%(tasks)d</b>任务</div>
-<div><b>%(wip)d</b>进行中</div><div><b>%(done)d</b>已完成/交付</div><div><b>%(proj)d</b>批次项目</div>
-</div>
-<h2>🔴 待受理（.inbox/）</h2>%(new)s
-<h2>🟡 已建未开工（planned）</h2>%(created_table)s
-<h2>🟠 进行中（wip/blocked）</h2>%(prog_table)s
-<h2>🟢 已完成 / 已交付</h2>%(fin_table)s
-<p class="mut">SQL 直查：sqlite3 .ws/board/board.db（表：tasks / cards / meta）</p>
-<script>const DATA = %(data)s;
-function cp(s){navigator.clipboard.writeText(s).then(()=>alert('已复制：'+s),()=>prompt('手动复制：',s));}</script>
-</body></html>''' % dict(
-        now=meta['generated_at'], np=len(new), tasks=len(tasks),
-        wip=len(prog), done=len(fin),
-        proj=len({t['projectRel'] for t in tasks if t['projectRel']}),
-        new='<table>' + ''.join(card_row(c) for c in new) + '</table>' if new else '<p class="mut">无待受理卡</p>',
-        created_table='<table>' + trow_group(created, lambda t: []) + '</table>',
-        prog_table='<table>' + trow_group(prog, lambda t: [
-            ('复制开工命令', 'buddycn chat "继续 %s：按 META 推进"' % t['taskPath']),
-            ('复制打包命令', 'bash .ws/bin/ws_pack.sh -T %s' % t['taskPath'])]) + '</table>',
-        fin_table='<table>' + trow_group(fin, lambda t: [
-            ('复制包路径', t['packed'] or '（未打包）')]) + '</table>',
-        data=data)
+    def api_delete(self, b):
+        tp = (b.get('task') or '').strip('/')
+        tdir = os.path.join(ROOT, tp)
+        if not tp or not os.path.isdir(tdir):
+            return {'ok':False,'error':'任务不存在：'+str(b.get('task'))}
+        if not (tp.startswith('projects/') or tp.startswith('scratch/')):
+            return {'ok':False,'error':'路径越界'}
+        if b.get('confirm') != 'DELETE':
+            return {'ok':False,'error':'安全确认失败：confirm 必须为 DELETE'}
+        mp = os.path.join(tdir,'.meta.yaml')
+        if not os.path.isfile(mp):
+            return {'ok':False,'error':'缺 .meta.yaml，拒绝删除非标准目录'}
+        st = re.search(r'^status:\s*(\S+)', open(mp, encoding='utf-8').read(), re.M)
+        st = st.group(1) if st else '?'
+        if st != 'planned':
+            return {'ok':False,'error':'任务状态为 %s（已开工/已交付），不允许删除；'
+                    '如需弃用请先人工确认' % st}
+        os.makedirs(TRASH, exist_ok=True)
+        dst = os.path.join(TRASH, datetime.datetime.now().strftime('%Y%m%d_%H%M%S_') + os.path.basename(tp))
+        shutil.move(tdir, dst)
+        subprocess.run(['bash',ROOT+'/.ws/bin/ws_index.sh'], cwd=ROOT, capture_output=True)
+        return {'ok':True,'note':'已移入回收站 %s（未真删）' % dst}
 
-    out = os.path.join(BOARD_DIR, 'index.html')
-    open(out, 'w', encoding='utf-8').write(page)
-    print('[完成] 看板已生成：%s' % out)
-    print('  任务 %d · 待受理卡 %d · 缓存 %s' % (len(tasks), len(new), DB))
+    def api_create(self, b):
+        for k in ('batch','product'):
+            if not b.get(k): return {'ok':False,'error':'缺少 %s' % k}
+        if not b.get('site') and not b.get('source_dir'):
+            return {'ok':False,'error':'site 与 source_dir 至少一个'}
+        args = ['bash', ROOT+'/.ws/bin/ws_dispatch.sh','-b',b['batch'],'-p',b['product']]
+        if b.get('site'): args += ['-s',b['site']]
+        if b.get('source_dir'): args += ['-f',b['source_dir']]
+        if b.get('request'): args += ['-r',b['request']]
+        if b.get('slug'): args += ['-t',b['slug']]
+        if b.get('date'): args += ['-d',b['date']]
+        if b.get('contract'): args += ['-c',b['contract']]
+        if b.get('notes'): args += ['-m',b['notes']]
+        rc, out = run(args)
+        if rc: return {'ok':False,'error':'发起失败','log':out}
+        # 补可选字段 species / sample_batch 到新任务 META
+        proj_rel = 'projects/%s/%s' % (datetime.date.today().year, b['batch'])
+        created = None
+        for tdir in sorted(glob.glob(os.path.join(ROOT,proj_rel,'*'+(b.get('slug') or '*'))),
+                           key=os.path.getmtime)[-1:]:
+            mp = os.path.join(tdir,'.meta.yaml')
+            if os.path.isfile(mp):
+                s = open(mp, encoding='utf-8').read()
+                for k in ('species','sample_batch'):
+                    if b.get(k):
+                        s = re.sub(r'^%s:.*$' % k, '%s: %s' % (k, b[k]), s, flags=re.M)
+                open(mp,'w',encoding='utf-8').write(s)
+            created = tdir
+        subprocess.run(['bash',ROOT+'/.ws/bin/ws_index.sh'], cwd=ROOT, capture_output=True)
+        return {'ok':True,'taskPath':created.replace(ROOT+'/', '') if created else None,
+                'note':'任务已创建并生成信息卡'}
 
-def main():
-    tasks = collect_tasks()
-    cards = collect_cards()
-    db = build_db(tasks, cards)
-    render(db)
-    db.close()
+    def api_accept(self, b):
+        name = os.path.basename(b.get('card') or '')
+        card = os.path.join(INBOX, name)
+        if not name or not os.path.isfile(card):
+            return {'ok':False,'error':'卡文件不存在：'+str(b.get('card'))}
+        info = parse_card(card)
+        if info.get('task_status') in ('wip','done','delivered'):
+            return {'ok':False,'error':'对应任务已 %s，拒绝重复受理' % info['task_status']}
+        logs = []
+        if not info.get('taskPath') or not os.path.isdir(os.path.join(ROOT, info['taskPath'])):
+            for k in ('batch','product'):
+                if not info.get(k): return {'ok':False,'error':'卡缺少 %s' % k}
+            if not info.get('site') and not info.get('source_dir'):
+                return {'ok':False,'error':'卡缺少 site/source_dir'}
+            args = ['bash',ROOT+'/.ws/bin/ws_new_project.sh','-b',info['batch'],'-p',info['product']]
+            if info.get('year'): args += ['-y',info['year']]
+            if info.get('site'): args += ['-s',info['site']]
+            if info.get('source_dir'): args += ['-f',info['source_dir']]
+            if info.get('contract'): args += ['-c',info['contract']]
+            rc,out = run(args); logs.append(out)
+            if rc: return {'ok':False,'error':'建项目失败','log':logs}
+            args = ['bash',ROOT+'/.ws/bin/ws_new_task.sh','-P','projects/%s/%s' % (info.get('year') or datetime.date.today().year, info['batch'])]
+            if info.get('slug'): args += ['-t',info['slug']]
+            if info.get('date'): args += ['-d',info['date']]
+            args += ['-r', info.get('request') or '（卡内无需求原文，请人工补充）']
+            rc,out = run(args); logs.append(out)
+            if rc: return {'ok':False,'error':'建任务失败','log':logs}
+        tp = info.get('taskPath') or ''
+        rc,out = run(['bash',ROOT+'/.ws/bin/ws_receipt.sh','-T',tp,'-s','accepted','-m','看板受理'])
+        logs.append(out)
+        os.makedirs(os.path.join(INBOX,'accepted'), exist_ok=True)
+        os.replace(card, os.path.join(INBOX,'accepted',name))
+        return {'ok':True,'taskPath':tp,'note':'受理完成，已写回执','log':logs}
+
+    def api_ignore(self, b):
+        name = os.path.basename(b.get('card') or '')
+        card = os.path.join(INBOX, name)
+        if not name or not os.path.isfile(card):
+            return {'ok':False,'error':'卡文件不存在'}
+        os.makedirs(os.path.join(INBOX,'ignored'), exist_ok=True)
+        os.replace(card, os.path.join(INBOX,'ignored',name))
+        return {'ok':True,'note':'已忽略'}
+
+    def api_deliver(self, b):
+        tp = (b.get('task') or '').strip('/')
+        if not tp or not os.path.isdir(os.path.join(ROOT,tp)):
+            return {'ok':False,'error':'任务不存在'}
+        rc,out = run(['bash',ROOT+'/.ws/bin/ws_pack.sh','-T',tp])
+        if rc: return {'ok':False,'error':'打包失败（同名包已存在或无文件）','log':out}
+        rc,out = run(['bash',ROOT+'/.ws/bin/ws_receipt.sh','-T',tp,'-s','delivered','-m','看板交付'])
+        if rc: return {'ok':False,'error':'打包成功但回执失败','log':out}
+        return {'ok':True,'note':'已打包并写交付回执'}
+
+    def log_message(self, fmt, *args):
+        sys.stderr.write('[board] %s\n' % (fmt % args))
 
 if __name__ == '__main__':
-    main()
+    os.chdir(ROOT)
+    print('[ControlTower] http://%s:%d  (root=%s)' % (BIND, PORT, ROOT))
+    ThreadingHTTPServer((BIND, PORT), Handler).serve_forever()
