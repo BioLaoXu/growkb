@@ -17,12 +17,12 @@ def parse_card(path):
     req_lines = []
     in_request = False
     for line in open(path, encoding='utf-8'):
-        line = line.rstrip('\n')
-        if line.startswith('#'):
+        line = line.strip()          # 兼容缩进式 YAML（工作台生成的卡键前带空格）
+        if not line or line.startswith('#'):
             continue
         m = re.match(r'^(\w+):\s*(.*?)\s*(?:#.*)?$', line)
         if m and m.group(1) in ('batch', 'contract', 'product', 'taskPath'):
-            info[m.group(1)] = m.group(2)
+            info[m.group(1)] = m.group(2).strip().strip("'\"")
             in_request = False
             continue
         if re.match(r'^request:\s*>-?\s*$', line):
@@ -56,6 +56,20 @@ def main():
                 info.get('taskPath', '?'), info.get('batch', '?'),
                 info.get('contract', '?'), info.get('product', '?'),
                 info.get('request', ''), info['file']))
+        # 会话命名约定：样本批次号（IDE 标题取自首条消息，受理时带上批次号即可自动命名）
+        batch = ''
+        for card in cards[:5]:
+            b = parse_card(card).get('batch', '')
+            if b and b != '?':
+                batch = b
+                break
+        if batch:
+            lines.append('会话命名约定：本会话若用于受理任务，'
+                         '请提醒用户在首条消息带上批次号（如「受理 %s」），'
+                         '使 IDE 会话标题自动含批次号，便于历史检索；'
+                         'Agent 受理后也应主动按「批次号_产品」建议命名。'
+                         % batch)
+        ctx = '\n'.join(lines)
         ctx = '\n'.join(lines)
 
     output = {

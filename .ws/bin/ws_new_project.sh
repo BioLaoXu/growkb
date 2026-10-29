@@ -45,7 +45,7 @@ if [[ -z "$source_dir" && -z "$site" ]]; then
 elif [[ -n "$source_dir" ]]; then
   [[ -d "$source_dir" ]] || warn "指定的源目录不存在：$source_dir（仍会建链，注意失效风险）"
 else
-  if source_dir="$(resolve.source "$product" "${year:-}" "$site")"; then
+  if source_dir="$(resolve_source "$product" "${year:-}" "$site")"; then
     info "自动匹配生产目录：$source_dir"
   else
     warn "未在 /data/Report 下推导到 ${product} 项目的 ${site}；可用 -f <路径> 显式指定，或稍后手工补 .source 软链。"
