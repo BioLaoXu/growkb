@@ -44,7 +44,12 @@ def scan_tasks():
     return out
 
 def list_cards():
-    out = []
+    """收件箱对账：卡对应的任务已存在（任意状态）→ 自动归档到 .inbox/accepted/。
+
+    归档的两种来源：看板 [受理]（即时归档）与 Agent 会话受理（靠本对账补归档）。
+    """
+    _, tasks = scan(ROOT)
+    out, archived = [], []
     for p in sorted(glob.glob(os.path.join(INBOX,'*_dispatch.yaml')), reverse=True):
         c = parse_card(p); c['file'] = os.path.basename(p)
         tp = c.get('taskPath') or ''
@@ -56,10 +61,23 @@ def list_cards():
                 m = re.search(r'^status:\s*(\S+)', open(mp, encoding='utf-8').read(), re.M)
                 st = m.group(1) if m else None
         c['task_status'] = st
+        # 对账：卡无 taskPath 时按 slug 匹配已有任务（会话受理未归档的情况）
+        if not st and c.get('slug'):
+            ms = sorted([t for t in tasks if c['slug'] in (t['task_id'] or '')],
+                        key=lambda t: t.get('updated') or '', reverse=True)
+            if ms:
+                tp = ms[0]['rel_path']; st = ms[0]['status']
+                c['taskPath'] = tp; c['task_status'] = st
         c['state'] = ('in-progress' if st in ('wip','done','delivered')
                       else 'created' if st == 'planned' else 'new')
+        if c['state'] in ('created', 'in-progress'):
+            os.makedirs(os.path.join(INBOX,'accepted'), exist_ok=True)
+            dst = os.path.join(INBOX,'accepted', c['file'])
+            if not os.path.exists(dst):
+                os.replace(p, dst); archived.append(c['file'])
+            continue   # 已受理的卡不再出现在待受理列表
         out.append(c)
-    return out
+    return out, archived
 
 def overview(tasks, cards):
     st = {}
@@ -87,9 +105,10 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         path = self.path.split('?')[0]
         if path == '/api/state':
-            tasks = scan_tasks(); cards = list_cards()
+            tasks = scan_tasks(); cards, auto_archived = list_cards()
+            ov = overview(tasks, cards); ov['auto_archived'] = auto_archived
             return self._json({'tasks':tasks,'cards':cards,
-                               'overview':overview(tasks,cards),
+                               'overview':ov,
                                'server_time':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
         if path == '/':
             self.path = '/.ws/board/index.html'
