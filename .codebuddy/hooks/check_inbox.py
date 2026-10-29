@@ -12,28 +12,34 @@ import sys
 
 
 def parse_card(path):
-    """从信息卡提取 batch/contract/product/taskPath/request 首行。"""
+    """解析信息卡：yaml 优先（兼容缩进式与平铺式），失败时逐行提取标量字段。"""
     info = {'file': os.path.basename(path)}
-    req_lines = []
-    in_request = False
-    for line in open(path, encoding='utf-8'):
-        line = line.strip()          # 兼容缩进式 YAML（工作台生成的卡键前带空格）
-        if not line or line.startswith('#'):
+    data = {}
+    try:
+        import yaml
+        raw = yaml.safe_load(open(path, encoding='utf-8')) or {}
+        if isinstance(raw, dict):
+            data = raw.get('【分析请求】', raw)
+            if not isinstance(data, dict):
+                data = {}
+    except Exception:
+        data = {}
+    if not data:
+        for line in open(path, encoding='utf-8'):
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            m = re.match(r'^(\w+):\s*(.*?)\s*(?:#.*)?$', line)
+            if m and m.group(2) and m.group(2) not in ('null', '>-', '|'):
+                info[m.group(1)] = m.group(2).strip().strip("'\"")
+    for k, v in data.items():
+        if k == 'inputs' or not isinstance(v, (str, int, float)):
             continue
-        m = re.match(r'^(\w+):\s*(.*?)\s*(?:#.*)?$', line)
-        if m and m.group(1) in ('batch', 'contract', 'product', 'taskPath'):
-            info[m.group(1)] = m.group(2).strip().strip("'\"")
-            in_request = False
-            continue
-        if re.match(r'^request:\s*>-?\s*$', line):
-            in_request = True
-            continue
-        if in_request:
-            if line.startswith((' ', '\t')) and line.strip():
-                req_lines.append(line.strip())
-            else:
-                in_request = False
-    info['request'] = ' '.join(req_lines)[:80] or '（详见卡文件）'
+        v = str(v).strip().strip("'\"")
+        if v and v != 'null':
+            info[k] = v
+    if 'request' in info:
+        info['request'] = info['request'].replace('\n', ' ')[:200]
     return info
 
 

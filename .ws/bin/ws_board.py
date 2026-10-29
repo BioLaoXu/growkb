@@ -118,7 +118,7 @@ def render(db):
 
     def card_row(c):
         dup = ' <b style="color:#f59e0b">疑似重复</b>' if c['dup'] else ''
-        cmd = 'buddycn chat \\"受理 .inbox/%s\\"' % c['file']
+        cmd = 'buddycn chat "受理 .inbox/%s"' % c['file']
         return ('<tr><td><b>%s</b>%s<br><small>合同 %s · 产品 %s</small></td>'
                 '<td><small>%s</small></td><td><small>%s</small></td>'
                 '<td><button onclick="cp(%s)">复制受理命令</button>'
@@ -148,7 +148,7 @@ button:hover{background:#334155}
 .mut{color:#64748b;font-size:.85em}
 </style></head><body>
 <h1>🛫 ControlTower · 工作空间看板</h1>
-<p class="mut">生成于 %s · 数据源：磁盘 .meta.yaml + .inbox/（board.db 为派生缓存，可随时重建）</p>
+<p class="mut">生成于 %(now)s · 数据源：磁盘 .meta.yaml + .inbox/（board.db 为派生缓存，可随时重建）</p>
 <div class="ov">
 <div><b>%(np)d</b>待受理卡</div><div><b>%(tasks)d</b>任务</div>
 <div><b>%(wip)d</b>进行中</div><div><b>%(done)d</b>已完成/交付</div><div><b>%(proj)d</b>批次项目</div>
