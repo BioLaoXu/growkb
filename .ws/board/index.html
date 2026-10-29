@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>ControlTower · 工作空间看板</title><style>
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:20px}
+h1{font-size:1.4em;margin:0 0 6px} h2{font-size:1.05em;margin:20px 0 8px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+select,input,textarea{background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:5px 8px}
+table{width:100%;border-collapse:collapse;font-size:.88em}
+th{background:#1e293b;text-align:left;padding:7px 9px;position:sticky;top:0}
+td{padding:7px 9px;border-bottom:1px solid #1e293b;vertical-align:top}
+tr:hover td{background:#16213b}
+.tag{padding:2px 8px;border-radius:4px;font-size:.8em;color:#0f172a;white-space:nowrap}
+button{background:#1e293b;color:#93c5fd;border:1px solid #334155;border-radius:4px;
+padding:3px 8px;cursor:pointer;font-size:.82em;margin:1px}
+button:hover{background:#334155} button.danger{color:#fca5a5;border-color:#7f1d1d}
+button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+.mut{color:#64748b;font-size:.85em} .wrap{max-width:1280px;margin:0 auto}
+details{background:#1e293b;border-radius:8px;padding:10px 14px;margin:10px 0}
+details label{display:inline-block;min-width:88px;font-size:.85em;color:#94a3b8}
+details input{width:270px} details textarea{width:430px;height:52px;background:#0f172a;
+color:#e2e8f0;border:1px solid #334155;border-radius:4px;vertical-align:top}
+form{margin:0}
+#toast{position:fixed;top:18px;right:18px;z-index:50;display:none;max-width:420px;
+background:#1e293b;border:1px solid #334155;border-left:4px solid #10b981;border-radius:6px;
+padding:10px 14px;font-size:.9em;white-space:pre-wrap}
+#toast.err{border-left-color:#ef4444}
+#mask{position:fixed;inset:0;background:#000a;z-index:40;display:none;align-items:center;justify-content:center}
+#modal{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:18px 20px;width:460px}
+#modal h3{margin:0 0 10px;font-size:1em} #modal input{width:100%;margin:8px 0}
+#modal .row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+.pager{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:.88em}
+</style></head><body><div class="wrap">
+<h1>🛫 ControlTower · 工作空间看板 <span class="mut" id="time"></span></h1>
+<div class="bar">
+  <select id="fStatus"><option value="">全部状态</option></select>
+  <input id="fText" placeholder="搜索：任务/批次/合同/产品/需求…" style="width:250px">
+  <button onclick="load()">刷新</button>
+  <span class="mut" id="count"></span>
+</div>
+<details><summary>➕ 新建任务（建项目如缺 + 建任务 + 信息卡）</summary><br>
+<form onsubmit="return create(this)">
+  <label>批次号*</label><input name="batch" required>
+  <label>产品*</label><input name="product" required><br>
+  <label>生产目录*</label><input name="site" placeholder="生产目录名（按 /data/Report/<产品>_project_<年>/ 推导）"><br>
+  <label>或全路径</label><input name="source_dir" placeholder="与上面二选一">
+  <label>合同号</label><input name="contract"><br>
+  <label>需求*</label><textarea name="request" required></textarea><br>
+  <label>slug</label><input name="slug" placeholder="缺省自动生成">
+  <label>日期</label><input name="date" placeholder="YYYYMMDD 缺省今天"><br>
+  <label>物种</label><input name="species">
+  <label>样本批次</label><input name="sample_batch">
+  <label>备注</label><input name="notes" style="width:270px"><br><br>
+  <button type="submit" class="primary">创建任务</button>
+</form></details>
+<h2>📥 待受理信息卡（.inbox/）</h2><table id="cards"><thead><tr>
+<th>批次</th><th>合同 / 产品</th><th>需求摘要</th><th>操作</th></tr></thead><tbody></tbody></table>
+<h2>📋 任务总表</h2><table id="tasks"><thead><tr>
+<th>状态</th><th>任务</th><th>批次 / 合同</th><th>产品</th><th>更新</th><th>需求摘要</th><th>操作</th>
+</tr></thead><tbody></tbody></table>
+<div class="pager" id="pager"></div>
+<div class="mut" id="sum"></div>
+</div>
+<div id="toast"></div>
+<div id="mask"><div id="modal">
+  <h3 id="mTitle"></h3><div id="mBody" class="mut"></div>
+  <input id="mInput" style="display:none">
+  <div class="row"><button onclick="mClose(false)">取消</button>
+  <button class="primary" id="mOk">确定</button></div>
+</div></div>
+<script src="app.js"></script></body></html>
