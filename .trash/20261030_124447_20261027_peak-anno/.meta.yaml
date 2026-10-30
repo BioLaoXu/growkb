@@ -1,0 +1,30 @@
+id: 20261027_peak-anno
+project: 92512126902_mouse
+contract: 92512126902
+batch: b01
+product: cut_tag         # 产品线（受理时从 .project.yaml 带入，pwb 对账字段）
+sample_batch: null           # 可选：样本批次（B1/B2），对应生产目录的派生批次
+species: null                # 可选：物种（mouse/human/...）
+source_dir: /data/Report/cut_tag_project_2026/92512126902_mouse
+created: 2026-10-27
+updated: 2026-10-27
+status: wip
+
+request: >-
+  客户要求用最新 TxDb 重做 peak 注释，补充 promoter 比例饼图
+
+methods:
+  - TODO
+
+scripts:
+  - scripts/TODO
+
+output:
+  - results/TODO
+
+deliverable:
+  synced_to: null
+  packed: projects/2026/92512126902_mouse/20261027_peak-anno/92512126902_peak-anno_20261030.tar.gz
+
+notes: |
+  TODO
