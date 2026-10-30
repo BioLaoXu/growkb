@@ -1,15 +1,15 @@
 【分析请求】:
-  batch: XJYF-cuttag20260910
-  contract: XJYF-cuttag20260910
-  product: cut_tag
-  site: 20261019_XJYF-cuttag20260910
-  source_dir: /data/Report/InHouseProject_2026/CUTTAG/20261019_XJYF-cuttag20260910
+  batch: XJYF-ATAC20260910
+  contract: XJYF-ATAC20260910
+  product: atac
+  site: 20261019_XJYF-ATAC20260910
+  source_dir: /data/Report/InHouseProject_2026/ATAC/20261019_XJYF-ATAC20260910
   species: 人
-  sample_batch: XJYF-cuttag20260910
+  sample_batch: XJYF-ATAC20260910
   year: '2026'
   slug: data-report-inhouseproject-2026-template
-  date: '20261028'
+  date: '20261030'
   request: '研发数据总结，参考模板：/data/Report/InHouseProject_2026/templates 目录下的html文档，或者在线链接：https://www.wolai.com/pzE8LY6J9SKiXN9pnE339J,
 
     目前已完成已完成一列，你可以参考：/data/Agent/xufa/workspace/projects/2026/XJYF-cuttag20260908/20261028_data-report-inhouseproject-2026-template/results/summary_pipeline_data_sources.md'
-  pwb_bioinfor_id: -8
+  pwb_bioinfor_id: -9

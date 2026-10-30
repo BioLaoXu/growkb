@@ -11,6 +11,18 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CODEBUDDY_PROJECT_DIR/.codebuddy/hooks/suggest_title.py\"",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }
