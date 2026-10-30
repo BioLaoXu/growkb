@@ -22,7 +22,7 @@ from ws_meta import scan
 from check_inbox import parse_card
 
 PORT = 8792
-BIND = '127.0.0.1'
+BIND = '127.0.0.1'   # 经 IDE 端口转发访问（工作站 localhost → 服务器）；IP 直连如需开放再改 0.0.0.0
 INBOX = os.path.join(ROOT, '.inbox')
 TRASH = os.path.join(ROOT, '.trash')
 TODAY = datetime.date.today().strftime('%Y%m%d')
@@ -62,8 +62,11 @@ def list_cards():
                 st = m.group(1) if m else None
         c['task_status'] = st
         # 对账：卡无 taskPath 时按 slug 匹配已有任务（会话受理未归档的情况）
-        if not st and c.get('slug'):
-            ms = sorted([t for t in tasks if c['slug'] in (t['task_id'] or '')],
+        if not st and c.get('slug') and c.get('batch'):
+            # 双匹配：slug 相同 且 卡的批次出现在任务路径里（防同名 slug 的不同批次误归档）
+            ms = sorted([t for t in tasks
+                         if c['slug'] in (t['task_id'] or '')
+                         and c['batch'] in (t['rel_path'] or '')],
                         key=lambda t: t.get('updated') or '', reverse=True)
             if ms:
                 tp = ms[0]['rel_path']; st = ms[0]['status']

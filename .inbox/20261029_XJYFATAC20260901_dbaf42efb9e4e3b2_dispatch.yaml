@@ -1,0 +1,15 @@
+【分析请求】:
+  batch: XJYF-微量ATAC20260901
+  contract: XJYF-微量ATAC20260901
+  product: atac
+  site: 20261018_XJYF-ATAC20260901
+  source_dir: /data/Report/InHouseProject_2026/ATAC/20261018_XJYF-ATAC20260901
+  species: 人
+  sample_batch: XJYF-微量ATAC20260901
+  year: '2026'
+  slug: data-report-inhouseproject-2026-template
+  date: '20261029'
+  request: '研发数据总结，参考模板：/data/Report/InHouseProject_2026/templates 目录下的html文档，或者在线链接：https://www.wolai.com/pzE8LY6J9SKiXN9pnE339J,
+
+    目前已完成已完成一列，你可以参考：/data/Agent/xufa/workspace/projects/2026/XJYF-cuttag20260908/20261028_data-report-inhouseproject-2026-template/results/summary_pipeline_data_sources.md'
+  pwb_bioinfor_id: -7
