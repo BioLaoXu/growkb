@@ -104,6 +104,53 @@ def overview(tasks, cards):
                            if sum(1 for x in new if x.get('batch')==c.get('batch')
                                   and x.get('slug')==c.get('slug')) > 1]}
 
+def md2html(md):
+    """极简 Markdown→HTML：标题/表格/代码块/列表/引用/粗体/行内码。"""
+    import html as H
+    def inline(t):
+        t = H.escape(t)
+        t = re.sub(r'`([^`]+)`', r'<code>\1</code>', t)
+        t = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', t)
+        return t
+    out, i, lines = [], 0, md.split('\n')
+    while i < len(lines):
+        ln = lines[i]
+        if ln.startswith('```'):
+            i += 1; buf = []
+            while i < len(lines) and not lines[i].startswith('```'):
+                buf.append(lines[i]); i += 1
+            i += 1
+            out.append('<pre>' + H.escape('\n'.join(buf)) + '</pre>')
+            continue
+        m = re.match(r'^(#{1,4})\s+(.*)$', ln)
+        if m:
+            lv = len(m.group(1))
+            out.append('<h%d>%s</h%d>' % (lv+1, inline(m.group(2)), lv+1)); i += 1; continue
+        if ln.strip().startswith('|'):
+            rows = []
+            while i < len(lines) and lines[i].strip().startswith('|'):
+                if not re.match(r'^\s*\|?[\s:\-|]+\|?\s*$', lines[i]):
+                    rows.append([c.strip() for c in lines[i].strip().strip('|').split('|')])
+                i += 1
+            out.append('<table>')
+            for j, cells in enumerate(rows):
+                tag = 'th' if j == 0 else 'td'
+                out.append('<tr>' + ''.join('<%s>%s</%s>' % (tag, inline(c), tag) for c in cells) + '</tr>')
+            out.append('</table>')
+            continue
+        if re.match(r'^\s*[-*]\s+', ln):
+            items = []
+            while i < len(lines) and re.match(r'^\s*[-*]\s+', lines[i]):
+                items.append(re.sub(r'^\s*[-*]\s+', '', lines[i])); i += 1
+            out.append('<ul>' + ''.join('<li>%s</li>' % inline(x) for x in items) + '</ul>')
+            continue
+        if ln.strip() == '---':
+            out.append('<hr>'); i += 1; continue
+        if ln.strip():
+            out.append('<p>%s</p>' % inline(ln))
+        i += 1
+    return '\n'.join(out)
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=ROOT, **kw)
@@ -124,6 +171,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json({'tasks':tasks,'cards':cards,'trash':self.trash_list(),
                                'overview':ov,
                                'server_time':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
+        if path == '/api/help':
+            hp = os.path.join(ROOT, '.ws/board/help.md')
+            md = open(hp, encoding='utf-8').read() if os.path.isfile(hp) else '# 帮助文档缺失'
+            return self._json({'html': md2html(md)})
         if path == '/':
             self.path = '/.ws/board/index.html'
         return SimpleHTTPRequestHandler.do_GET(self)

@@ -28,12 +28,19 @@ padding:10px 14px;font-size:.9em;white-space:pre-wrap}
 #modal h3{margin:0 0 10px;font-size:1em} #modal input{width:100%;margin:8px 0}
 #modal .row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
 .pager{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:.88em}
+#helpMask{position:fixed;inset:0;background:#000c;z-index:60;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px}
+#helpModal{background:#0f172a;border:1px solid #334155;border-radius:8px;width:920px;max-width:96vw;padding:16px 22px}
+#helpModal .hbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+#helpBody{font-size:.92em;line-height:1.55}
+#helpBody h2{border-bottom:1px solid #334155} #helpBody pre{background:#1e293b;padding:10px;border-radius:6px;overflow:auto}
+#helpBody code{background:#1e293b;padding:1px 5px;border-radius:3px}
 </style></head><body><div class="wrap">
 <h1>🛫 ControlTower · 工作空间看板 <span class="mut" id="time"></span></h1>
 <div class="bar">
   <select id="fStatus"><option value="">全部状态</option></select>
   <input id="fText" placeholder="搜索：任务/批次/合同/产品/需求…" style="width:250px">
   <button onclick="load()">刷新</button>
+  <button class="primary" onclick="openHelp()">📖 帮助</button>
   <span class="mut" id="count"></span>
 </div>
 <details><summary>➕ 新建任务（建项目如缺 + 建任务 + 信息卡）</summary><br>
@@ -62,6 +69,11 @@ padding:10px 14px;font-size:.9em;white-space:pre-wrap}
 <div class="pager" id="pager"></div>
 <div class="mut" id="sum"></div>
 </div>
+<div id="helpMask"><div id="helpModal">
+  <div class="hbar"><b>📖 ControlTower 帮助 · 工作流全解</b>
+  <button onclick="closeHelp()">关闭</button></div>
+  <div id="helpBody"></div>
+</div></div>
 <div id="toast"></div>
 <div id="mask"><div id="modal">
   <h3 id="mTitle"></h3><div id="mBody" class="mut"></div>

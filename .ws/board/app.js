@@ -167,3 +167,17 @@ function trashPurge(name){
     post('/api/trash/purge', {name, confirm:'DELETE'});
   }, '永久删除');
 }
+
+// ---------- 帮助文档（实时读取 help.md，改文档即更新） ----------
+function openHelp(){
+  const m = document.getElementById('helpMask');
+  m.style.display = 'flex';
+  const c = document.getElementById('helpBody');
+  c.innerHTML = '<p class="mut">加载中…</p>';
+  fetch('/api/help').then(r => r.json()).then(d => { c.innerHTML = d.html; })
+    .catch(e => { c.innerHTML = '<p>加载失败：' + e + '</p>'; });
+}
+function closeHelp(){ document.getElementById('helpMask').style.display = 'none'; }
+document.getElementById('helpMask').addEventListener('click', e => {
+  if (e.target.id === 'helpMask') closeHelp();
+});
