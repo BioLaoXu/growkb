@@ -62,6 +62,7 @@ function render(){
       <td>${t.product||'—'}</td><td><small>${t.updated||'—'}</small></td>
       <td>${t.request||'—'}</td>
       <td>
+        ${planned?`<button class="primary" onclick="receipt('${t.rel_path}')">受理</button>`:''}
         <button onclick="editStatus('${t.rel_path}','${t.status}')">改状态</button>
         <button onclick="editField('${t.rel_path}','request','${(t.request||'').replace(/'/g,'')}')">改需求</button>
         ${planned ? `<button class="danger" onclick="del('${t.rel_path}')">删除</button>`:''}
@@ -109,6 +110,10 @@ function del(task){
     if (v !== 'DELETE') return toast('未输入 DELETE，已取消', true);
     post('/api/delete', {task, confirm:'DELETE'});
   }, '删除');
+}
+function receipt(task){
+  mOpen('受理确认', '将为 ' + task + ' 写受理回执（接单确认；不改任务状态）。', false,
+        v => post('/api/receipt', {task}), '受理');
 }
 function deliver(task){
   mOpen('打包 + 交付', '将对 ' + task + ' 执行 ws_pack.sh 打包并写交付回执（同名包已存在会失败）。', false,

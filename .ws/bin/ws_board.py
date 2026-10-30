@@ -121,7 +121,7 @@ class Handler(SimpleHTTPRequestHandler):
         path = self.path.split('?')[0]
         table = {'/api/create':self.api_create,'/api/update':self.api_update,
                  '/api/delete':self.api_delete,'/api/accept':self.api_accept,
-                 '/api/ignore':self.api_ignore,'/api/deliver':self.api_deliver,
+                 '/api/ignore':self.api_ignore,'/api/deliver':self.api_deliver,'/api/receipt':self.api_receipt,
                  '/api/trash/restore':self.api_trash_restore,
                  '/api/trash/purge':self.api_trash_purge}
         fn = table.get(path)
@@ -246,11 +246,31 @@ class Handler(SimpleHTTPRequestHandler):
             rc,out = run(args); logs.append(out)
             if rc: return {'ok':False,'error':'建任务失败','log':logs}
         tp = info.get('taskPath') or ''
+        if not tp:
+            # 卡-only：按 建任务输出 定位刚创建的任务（项目目录下 slug 最新匹配）
+            proj_rel = 'projects/%s/%s' % (info.get('year') or datetime.date.today().year, info['batch'])
+            cand = sorted(glob.glob(os.path.join(ROOT, proj_rel, '*' + (info.get('slug') or ''))),
+                          key=os.path.getmtime)
+            if cand:
+                tp = cand[-1].replace(ROOT + '/', '')
         rc,out = run(['bash',ROOT+'/.ws/bin/ws_receipt.sh','-T',tp,'-s','accepted','-m','看板受理'])
         logs.append(out)
+        if rc or not tp:
+            return {'ok':False,'error':'受理回执失败'+('（未定位到新任务）' if not tp else ''),'log':logs}
         os.makedirs(os.path.join(INBOX,'accepted'), exist_ok=True)
         os.replace(card, os.path.join(INBOX,'accepted',name))
         return {'ok':True,'taskPath':tp,'note':'受理完成，已写回执','log':logs}
+
+    def api_receipt(self, b):
+        """总表 [受理]：对已建任务写 accepted 回执（接单确认，不改状态）。"""
+        tp = (b.get('task') or '').strip('/')
+        if not tp or not os.path.isfile(os.path.join(ROOT, tp, '.meta.yaml')):
+            return {'ok': False, 'error': '任务不存在：' + tp}
+        rc, out = run(['bash', ROOT + '/.ws/bin/ws_receipt.sh', '-T', tp,
+                       '-s', 'accepted', '-m', '看板受理'])
+        if rc:
+            return {'ok': False, 'error': '回执写入失败', 'log': out}
+        return {'ok': True, 'note': '受理回执已写（' + tp + '）'}
 
     def api_ignore(self, b):
         name = os.path.basename(b.get('card') or '')

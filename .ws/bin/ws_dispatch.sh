@@ -4,6 +4,7 @@
 # 用法：
 #   ws_dispatch.sh -b <批次号> -p <产品> (-s <site> | -f <source_dir>) -r "<需求>" \
 #                 [-t <slug>] [-d <YYYYMMDD>] [-y <year>] [-c <contract>] [-m <备注>]
+#   追加 -C：卡-only 模式（只投卡到 .inbox/，受理时才建项目/任务）
 # 例：
 #   ws_dispatch.sh -b 92512126902_mouse -p cut_tag -s 92512126902_mouse \
 #                 -r "用最新 TxDb 重做 peak 注释" -t peak-anno
@@ -16,7 +17,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_lib.sh"
 
 batch=""; product=""; site=""; source_dir=""; request=""; slug=""; date_prefix=""; year=""; contract=""; note=""
 
-while getopts ":b:p:s:f:r:t:d:y:c:m:h" opt; do
+card_only=0
+while getopts ":b:p:s:f:r:t:d:y:c:m:Ch" opt; do
   case "$opt" in
     b) batch="$OPTARG" ;;
     p) product="$OPTARG" ;;
@@ -28,6 +30,7 @@ while getopts ":b:p:s:f:r:t:d:y:c:m:h" opt; do
     y) year="$OPTARG" ;;
     c) contract="$OPTARG" ;;
     m) note="$OPTARG" ;;
+    C) card_only=1 ;;
     h) usage_die "用法：ws_dispatch.sh -b <批次号> -p <产品> (-s <site>|-f <source_dir>) -r \"<需求>\" [-t slug] [-d YYYYMMDD] [-y 年] [-c 合同] [-m 备注]" ;;
     *) usage_die "未知参数 -$OPTARG" ;;
   esac
@@ -37,6 +40,36 @@ done
 [[ -n "$site" || -n "$source_dir" ]] || usage_die "必须给 -s <site>（推导）或 -f <source_dir>（全路径）"
 [[ -z "$year" ]] && year="$(date +%Y)"
 [[ -n "$slug" ]] || slug="req-$(date +%H%M%S)"
+
+# ⓪ 卡-only 模式：只投卡，受理时才建项目/任务
+if [[ $card_only -eq 1 ]]; then
+  mkdir -p "$WS_ROOT/.inbox"
+  card="$WS_ROOT/.inbox/$(today)_${slug}_card.yaml"
+  request_flat="${request//$'\n'/ }"
+  cat > "$card" <<EOF
+# 卡-only 投递（ws_dispatch -C）：未建任务，受理时创建
+【分析请求】
+batch: $batch
+contract: ${contract:-null}
+product: $product
+site: ${site:-null}
+source_dir: ${source_dir:-null}
+year: $year
+slug: $slug
+date: $(today)
+request: >-
+  $request_flat
+species: null
+sample_batch: null
+notes: ${note:-null}
+EOF
+  cat <<EOF
+
+[完成] 卡-only 投递：${card#$WS_ROOT/}
+  任务未创建——在看板点 [受理]，或会话说「受理 $slug」时创建项目/任务。
+EOF
+  exit 0
+fi
 
 # ① 建项目（已存在则复用）
 proj_rel="projects/${year}/${batch}"
