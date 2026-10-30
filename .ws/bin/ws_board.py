@@ -110,7 +110,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path == '/api/state':
             tasks = scan_tasks(); cards, auto_archived = list_cards()
             ov = overview(tasks, cards); ov['auto_archived'] = auto_archived
-            return self._json({'tasks':tasks,'cards':cards,
+            return self._json({'tasks':tasks,'cards':cards,'trash':self.trash_list(),
                                'overview':ov,
                                'server_time':datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
         if path == '/':
@@ -121,7 +121,9 @@ class Handler(SimpleHTTPRequestHandler):
         path = self.path.split('?')[0]
         table = {'/api/create':self.api_create,'/api/update':self.api_update,
                  '/api/delete':self.api_delete,'/api/accept':self.api_accept,
-                 '/api/ignore':self.api_ignore,'/api/deliver':self.api_deliver}
+                 '/api/ignore':self.api_ignore,'/api/deliver':self.api_deliver,
+                 '/api/trash/restore':self.api_trash_restore,
+                 '/api/trash/purge':self.api_trash_purge}
         fn = table.get(path)
         if not fn: return self._json({'ok':False,'error':'未知接口 '+path},404)
         try:
@@ -180,6 +182,7 @@ class Handler(SimpleHTTPRequestHandler):
         os.makedirs(TRASH, exist_ok=True)
         dst = os.path.join(TRASH, datetime.datetime.now().strftime('%Y%m%d_%H%M%S_') + os.path.basename(tp))
         shutil.move(tdir, dst)
+        open(os.path.join(dst, '.origin'), 'w', encoding='utf-8').write(tp)
         subprocess.run(['bash',ROOT+'/.ws/bin/ws_index.sh'], cwd=ROOT, capture_output=True)
         return {'ok':True,'note':'已移入回收站 %s（未真删）' % dst}
 
@@ -257,6 +260,42 @@ class Handler(SimpleHTTPRequestHandler):
         os.makedirs(os.path.join(INBOX,'ignored'), exist_ok=True)
         os.replace(card, os.path.join(INBOX,'ignored',name))
         return {'ok':True,'note':'已忽略'}
+
+    def trash_list(self):
+        out = []
+        for d in sorted(glob.glob(os.path.join(TRASH, '*')), reverse=True):
+            if not os.path.isdir(d):
+                continue
+            of = os.path.join(d, '.origin')
+            origin = open(of, encoding='utf-8').read().strip() if os.path.isfile(of) else ''
+            out.append({'name': os.path.basename(d), 'origin': origin})
+        return out
+
+    def api_trash_restore(self, b):
+        name = os.path.basename(b.get('name') or '')
+        src = os.path.join(TRASH, name)
+        of = os.path.join(src, '.origin')
+        if not name or not os.path.isdir(src) or not os.path.isfile(of):
+            return {'ok': False, 'error': '回收站条目不存在或缺 .origin：' + name}
+        origin = open(of, encoding='utf-8').read().strip()
+        target = os.path.join(ROOT, origin)
+        if os.path.exists(target):
+            return {'ok': False, 'error': '原位置已被占用：' + origin}
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.move(src, target)
+        os.remove(of)
+        subprocess.run(['bash', ROOT + '/.ws/bin/ws_index.sh'], cwd=ROOT, capture_output=True)
+        return {'ok': True, 'note': '已找回至 ' + origin}
+
+    def api_trash_purge(self, b):
+        name = os.path.basename(b.get('name') or '')
+        src = os.path.join(TRASH, name)
+        if not name or not os.path.isdir(src):
+            return {'ok': False, 'error': '回收站条目不存在：' + name}
+        if b.get('confirm') != 'DELETE':
+            return {'ok': False, 'error': '彻底删除不可恢复，confirm 必须为 DELETE'}
+        shutil.rmtree(src)
+        return {'ok': True, 'note': '已彻底删除 ' + name}
 
     def api_deliver(self, b):
         tp = (b.get('task') or '').strip('/')

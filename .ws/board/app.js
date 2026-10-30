@@ -84,6 +84,7 @@ function render(){
     || '<tr><td colspan=4 class="mut">收件箱为空</td></tr>';
   const cnt = {}; rows.forEach(t=>cnt[t.status]=(cnt[t.status]||0)+1);
   document.getElementById('count').textContent = `显示 ${slice.length} / 筛选 ${rows.length} / 总 ${STATE.tasks.length}`;
+  renderTrash();
   document.getElementById('sum').innerHTML = '汇总（当前筛选）：' +
     Object.keys(S).map(k=>`${S[k][1]} <b>${cnt[k]||0}</b>`).join(' · ') +
     ` · 待受理卡 <b>${STATE.cards.filter(c=>c.state==='new').length}</b>`;
@@ -136,3 +137,26 @@ load();
 document.getElementById('mOk').onclick = () => mClose(true);
 document.getElementById('mInput').addEventListener('keydown', e => { if (e.key === 'Enter') mClose(true); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') mClose(false); });
+
+// ---------- 回收站 ----------
+function renderTrash(){
+  const tb = document.querySelector('#trash tbody');
+  const items = STATE.trash || [];
+  document.getElementById('trashN').textContent = items.length;
+  tb.innerHTML = items.map(t =>
+    `<tr><td><b>${t.name}</b></td><td><small>${t.origin||'—（手工移入，无原始路径记录）'}</small></td>
+     <td><button onclick="trashRestore('${t.name}')">找回</button>
+     <button class="danger" onclick="trashPurge('${t.name}')">彻底删除</button></td></tr>`).join('')
+    || '<tr><td colspan=3 class="mut">回收站为空</td></tr>';
+}
+function trashRestore(name){
+  mOpen('找回任务', '将把 ' + name + ' 移回原路径（原路径被占用则报错）。', false,
+        v => post('/api/trash/restore', {name}), '找回');
+}
+function trashPurge(name){
+  mOpen('彻底删除', '将永久删除 ' + name + '（含全部脚本与结果，不可恢复！）。请输入 DELETE 确认：',
+        true, v => {
+    if (v !== 'DELETE') return toast('未输入 DELETE，已取消', true);
+    post('/api/trash/purge', {name, confirm:'DELETE'});
+  }, '永久删除');
+}
