@@ -62,7 +62,9 @@ function render(){
       <td>${t.product||'—'}</td><td><small>${t.updated||'—'}</small></td>
       <td>${t.request||'—'}</td>
       <td>
-        ${planned?`<button class="primary" onclick="receipt('${t.rel_path}')">受理</button>`:''}
+        ${planned?(t.receipt_accepted
+          ?'<span class="tag" style="background:#10b981">✓ 已受理</span>'
+          :`<button class="primary" onclick="receipt('${t.rel_path}')">受理</button>`):''}
         <button onclick="editStatus('${t.rel_path}','${t.status}')">改状态</button>
         <button onclick="editField('${t.rel_path}','request','${(t.request||'').replace(/'/g,'')}')">改需求</button>
         ${planned ? `<button class="danger" onclick="del('${t.rel_path}')">删除</button>`:''}

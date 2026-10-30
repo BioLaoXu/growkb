@@ -32,14 +32,25 @@ def run(args):
     tail = (r.stdout + '\n' + r.stderr).strip().splitlines()[-6:]
     return r.returncode, '\n'.join(tail)
 
+def accepted_receipts():
+    """从 .outbox 回执反查：哪些任务已写过 accepted 回执。"""
+    done = set()
+    for p in glob.glob(os.path.join(ROOT, '.outbox', '*_accepted.yaml')):
+        m = re.search(r'^taskPath:\s*(.+)$', open(p, encoding='utf-8').read(), re.M)
+        if m:
+            done.add(m.group(1).strip())
+    return done
+
 def scan_tasks():
     _, tasks = scan(ROOT)
     keys = ('task_id','rel_path','project_rel','contract','batch','status',
             'packed','updated','product','species','request','methods')
     out = []
+    accepted = accepted_receipts()
     for t in tasks:
         d = {k: t.get(k) for k in keys}
         d['request'] = (d.get('request') or '').replace('\n',' ')[:70]
+        d['receipt_accepted'] = (t.get('rel_path') or '') in accepted
         out.append(d)
     return out
 
