@@ -1,0 +1,43 @@
+# 工具目录表（P0-6.3：描述="动词+有界输入+明确禁止项"；启动/MCP 化时与实现断言对齐）
+# 供未来 ws_* MCP 化直接引用；Agent 受理/开工提示词亦可引用本表
+version: 1
+tools:
+  - name: ws_new_project
+    verb: create
+    description: "Create one batch project directory with hidden metadata. Requires -b batch -p product and -s site or -f source_dir. Refuses duplicate projects."
+  - name: ws_new_task
+    verb: create
+    description: "Create one task under an existing project. Requires -P project -t slug -r request. Refuses duplicate task dirs."
+  - name: ws_dispatch
+    verb: create
+    description: "One-shot intake: create project (if missing) + task + intake card into .inbox/. -C writes card only (no task). Refuses duplicate slug."
+  - name: ws_index
+    verb: refresh
+    description: "Rebuild global and per-project INDEX views from disk facts. Read-only on business data. Safe to rerun anytime."
+  - name: ws_find
+    verb: search
+    description: "Keyword search over indexes. Optional -p product -s status filters. Read-only."
+  - name: ws_check
+    verb: verify
+    description: "Four-dimension health check (links/metadata/unindexed/space). Outputs fix suggestions. Read-only."
+  - name: ws_report
+    verb: render
+    description: "Render task report.md to results/report.html via built-in converter. Requires report.md in task root."
+  - name: ws_receipt
+    verb: record
+    description: "Write one acceptance/done/delivered receipt into .outbox/. Requires -T task -s status. Append-only; never edit existing receipts."
+  - name: ws_pack
+    verb: package
+    description: "Package deliverable (scripts+results) into tar.gz next to the task. Excludes symlinks, metadata, existing archives. Refuses overwriting an existing package."
+  - name: ws_deliver
+    verb: sync
+    description: "Sync deliverable into production Analysis dir. Dry-run by default; -y performs writes. Never overwrites existing production files."
+  - name: ws_backup
+    verb: backup
+    description: "Backup all irreplaceable metadata (META/index/receipts/bin/templates) into rolling archive. Keeps latest 10."
+  - name: ws_migrate
+    verb: migrate
+    description: "Pack or deploy the whole workspace (pack/deploy/handover/--to). Path-remap supported via --remap old=new."
+  - name: ws_board
+    verb: serve
+    description: "ControlTower dashboard service (static+API on 127.0.0.1:8792). Write APIs call the tools above only."

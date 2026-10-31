@@ -319,9 +319,33 @@ class Handler(SimpleHTTPRequestHandler):
         logs.append(out)
         if rc or not tp:
             return {'ok':False,'error':'受理回执失败'+('（未定位到新任务）' if not tp else ''),'log':logs}
+        # 环境预核验（P0-1.2）：结果落盘任务目录，开工提示词直接引用
+        try:
+            sd = info.get('source_dir') or ''
+            if not sd:
+                pp = os.path.join(ROOT, os.path.dirname(tp), '.project.yaml')
+                if os.path.isfile(pp):
+                    mm = re.search(r'^source_dir:\s*(.+?)\s*(?:#.*)?$', open(pp, encoding='utf-8').read(), re.M)
+                    sd = mm.group(1).strip().strip(chr(39)).strip(chr(34)) if mm else ''
+            env = {'source_dir': sd or None, 'source_dir_exists': bool(sd and os.path.isdir(sd))}
+            for rel in ('sample.txt', 'group.txt', 'config.yaml'):
+                env[rel] = bool(sd and os.path.isfile(os.path.join(sd, rel)))
+            if sd and env['source_dir_exists']:
+                try:
+                    env['top_entries'] = sorted(os.listdir(sd))[:12]
+                except Exception:
+                    env['top_entries'] = []
+            import datetime as _dt
+            env['checked_at'] = _dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            with open(os.path.join(ROOT, tp, '.env_check.yaml'), 'w', encoding='utf-8') as fh:
+                fh.write('# 环境预核验（受理时生成；开工提示词引用）\n')
+                for k, v in env.items():
+                    fh.write('%s: %s\n' % (k, v))
+        except Exception:
+            pass
         os.makedirs(os.path.join(INBOX,'accepted'), exist_ok=True)
         os.replace(card, os.path.join(INBOX,'accepted',name))
-        return {'ok':True,'taskPath':tp,'note':'受理完成，已写回执','log':logs}
+        return {'ok':True,'taskPath':tp,'note':'受理完成，已写回执与环境预核验','log':logs}
 
     def api_receipt(self, b):
         """总表 [受理]：对已建任务写 accepted 回执（接单确认，不改状态）。"""
