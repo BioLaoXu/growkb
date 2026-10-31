@@ -160,6 +160,8 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(code)
         self.send_header('Content-Type','application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(body)))
+        if self.command == 'POST':
+            self.send_header('Cache-Control','no-store')   # P1-6.8：写响应禁缓存
         self.end_headers()
         self.wfile.write(body)
 
@@ -194,9 +196,29 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception:
             return self._json({'ok':False,'error':'请求体不是合法 JSON'},400)
         try:
-            return self._json(fn(body))
+            result = fn(body)
         except Exception as e:
-            return self._json({'ok':False,'error':'服务器异常：%s' % e},500)
+            return self._json({'ok':False,'error':{'message':'服务器异常：%s' % e,
+                               'retriable':True,
+                               'next_steps':['稍后重试','查看 /tmp/ws_board.log']}}, 500)
+        if isinstance(result, dict) and not result.get('ok'):
+            err = result.get('error')
+            if isinstance(err, str):
+                err = {'message': err, 'retriable': False}
+                result['error'] = err
+            if isinstance(err, dict) and 'next_steps' not in err:
+                common = {'/api/accept': ['确认卡内 site/source_dir 可用',
+                          '手工受理：会话说「受理 <卡>」'],
+                          '/api/deliver': ['检查 results/ 是否有产出',
+                          '同名包已存在时用 -v2 重做目录'],
+                          '/api/delete': ['仅 planned 可删；wip/done 请人工确认'],
+                          '/api/update': ['检查字段名与取值（status 白名单）'],
+                          '/api/create': ['检查批次号/生产目录/需求必填'],
+                          '/api/trash/restore': ['原路径被占用则先移走占用者'],
+                          '/api/trash/purge': ['输入 DELETE 确认才会执行']}
+                err['retriable'] = err.get('retriable', path in ('/api/accept',))
+                err['next_steps'] = common.get(path, ['查看 /tmp/ws_board.log'])
+        return self._json(result)
 
     EDITABLE = ('status','request','notes','species','sample_batch')
     STATUS = ('planned','wip','blocked','done','delivered')

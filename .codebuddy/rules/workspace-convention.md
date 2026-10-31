@@ -84,7 +84,7 @@ ls -1t .inbox/*_dispatch.yaml 2>/dev/null | head -5
 3. `ws_new_task.sh` 建任务（信息卡带 date 时加 `-d`），META 自动填 contract/product/batch；再补 `sample_batch`、`species`、`request` 原文与 `notes`；
 4. 信息卡里的 `inputs` 逐条 `ln -s` 成 `input.*`（目标不存在要先问）；
 5. `ws_receipt.sh -T <任务> -s accepted` 写受理回执；收尾、交付时再补 `done` / `delivered` 回执；
-5B. **经验沉淀（MEMEX）**：任务 done 后按 `.kb/memory/_schema.md` 提炼 0-3 条经验写入 `.kb/memory/`（变更类写"转变前后"）；检索到 ≥3 条同类 → 提示升华进 `.kb/docs/methods/`；
+5B. **经验沉淀（MEMEX）**（**防污染纪律**：只从用户消息与生产数据提炼；禁止把 Agent 自己的计划/自述当经验——防角色泄漏；入库一律走 `python3 .ws/bin/ws_memory.py add <条目.yaml>`，自动 MD5+语义双层去重；矛盾删除必须写 --reason）：任务 done 后按 `.kb/memory/_schema.md` 提炼 0-3 条经验写入 `.kb/memory/`（变更类写"转变前后"）；检索到 ≥3 条同类 → 提示升华进 `.kb/docs/methods/`；
 5C. **长任务断点续跑**：开工时建 `plan.md`（3-7 项勾选清单，模板 `.ws/templates/plan.md.tmpl`），规则：单次只完成一项、禁复活已取消项、阶段产物落盘即状态（重入先查 plan.md 跳过已完成）；
 5A. **收尾自评**：按 `.kb/docs/methods/report-scoring.md` 逐子步骤打分写入 META notes；总分 <0.8 不置 done；
 6. **环境预注入**：受理完成时核验生产目录（存在性、样本表/config.yaml/config 是否齐备），结果写入任务目录 `.env_check.yaml`；开工提示词必须引用"已核验环境清单"，禁止凭记忆假设数据位置；

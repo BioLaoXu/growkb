@@ -1,0 +1,68 @@
+# 胶囊任务书（不含结论——受测 Agent 自行产出分析）
+id: 20261031-atac-data-report
+source_task: projects/2026/XJYF-ATAC20260901/20261029_data-report-inhouseproject-2026-template
+created: 2026-10-31
+request: >-
+  >-
+standard_outputs:
+  - data/AllSample.GeneProfile.png
+  - data/FRIP.ratio.xls
+  - data/GenomeCoverage.png
+  - data/IP_Efficiency.S1K.png
+  - data/IP_Efficiency.S5K.png
+  - data/IP_Efficiency.S5W.png
+  - data/IP_Efficiency.png
+  - data/IP_Efficiency.xls
+  - data/LibComplexity.Chrom.png
+  - data/LibComplexity.Total.png
+  - data/LibComplexity.Total.xls
+  - data/Peak.fragSize.QC.xls
+  - data/Peak.fragSize.png
+  - data/PeakOverlap.PairWiseCount.png
+  - data/PeakOverlap.PairWiseFreq.png
+  - data/PeakOverlap.Venn.png
+  - data/PeakRep.IDR.xls
+  - data/PeakRep.IDR001.png
+  - data/PeakRep.IDR005.png
+  - data/QC.Summary.txt
+  - data/S1K_1.Feature.pie.png
+  - data/S1K_1.Quality.png
+  - data/S1K_2.Feature.pie.png
+  - data/S1K_2.Quality.png
+  - data/S1K_3.Feature.pie.png
+  - data/S1K_3.Quality.png
+  - data/S1K_4.Feature.pie.png
+  - data/S1K_4.Quality.png
+  - data/S5K_1.Feature.pie.png
+  - data/S5K_1.Quality.png
+  - data/S5K_2.Feature.pie.png
+  - data/S5K_2.Quality.png
+  - data/S5K_3.Feature.pie.png
+  - data/S5K_3.Quality.png
+  - data/S5K_4.Feature.pie.png
+  - data/S5K_4.Quality.png
+  - data/S5W_1.Feature.pie.png
+  - data/S5W_1.Quality.png
+  - data/S5W_2.Feature.pie.png
+  - data/S5W_2.Quality.png
+  - data/S5W_5.Feature.pie.png
+  - data/S5W_5.Quality.png
+  - data/S5W_6.Feature.pie.png
+  - data/S5W_6.Quality.png
+  - data/TXS.Score.xls
+  - data/cross.correlation.S1K.png
+  - data/cross.correlation.S5K.png
+  - data/cross.correlation.S5W.png
+  - data/cross.correlation.png
+  - data/cross.correlation.xls
+  - data/cross_consistency.png
+  - data/cross_consistency_ratio.xls
+  - data/fragSize.QC.xls
+  - data/fragSize.group.png
+  - data/fragSize.png
+  - data/mapping.stats.txt
+  - data/peak.attr.png
+  - data/peak.fold.png
+  - data/peak.score.png
+  - data/peak.width.png
+  - data/peak_annotation_promoter_ratio.tsv
