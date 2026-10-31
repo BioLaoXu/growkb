@@ -66,8 +66,8 @@
 ## 执行波次
 
 - **Wave 1（核心 8 仓精读）✅ 已完成（2026-10-31，8 份笔记见 absorb/，综合见 wave1-synthesis.md）**：OmicsClaw · GenoAgent · CellAgent · OpenHands · MetaGPT · BixBench · Mem0 · BioMCP
-- **Wave 2（结构研究 10 源）**：lm-eval-harness · LangGraph · AI-Scientist · aider · AutoGen · nf-core · Biomni · SWE-agent · ToolUniverse · PaperQA2
-- **Wave 3（要点级 15 源）**：其余全部（Letta/Hindsight/Cognee/claude-mem/Galaxy/GeneGPT/scAgent/ELAGT/AutoBA/BioMANIA/BRAD/geno_agent/bioskills/bio-* 族/scientific-agent-skills/crewAI/smolagents）
+- **Wave 2（结构研究 10 源）✅ 已完成（9/10 笔记入库，paper-qa 因平台载荷 bug 由主会话补写）**：lm-eval-harness · LangGraph · AI-Scientist · aider · AutoGen · nf-core · Biomni · SWE-agent · ToolUniverse · PaperQA2
+- **Wave 3（要点级）✅ 已完成（4 份合并笔记：记忆层四仓/生信四仓/框架与技能族/Galaxy 文档级）**：其余全部（Letta/Hindsight/Cognee/claude-mem/Galaxy/GeneGPT/scAgent/ELAGT/AutoBA/BioMANIA/BRAD/geno_agent/bioskills/bio-* 族/scientific-agent-skills/crewAI/smolagents）
 
 ## 产出物
 
@@ -80,3 +80,6 @@
 - 源码浅克隆至 ~/study/（工作空间外，不污染任务区）
 - 每仓用并行代码探索子代理按六字段模板产出笔记（主会话汇总）
 - 每完成一个 Wave：笔记入知识库（ws_kb sync）+ 综合推进一次
+
+
+> **2026-10-31 全部波次完成**：25 份笔记 + 《吸收综合报告》（SYNTHESIS.md，P0/P1/P2 提案 27 条）。剩余未深读：Galaxy（降级文档级）、ELAGT/AutoBA（论文级，见 agent-deep-dive）。

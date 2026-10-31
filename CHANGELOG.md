@@ -25,3 +25,6 @@
 ## 2026-10-31 — feat: Wave 1 源码吸收完成——8 份精读笔记（OmicsClaw/GenoTEX/CellAgent/OpenHands/MetaGPT/BixBench/mem0/BioMCP）+ 综合快报
 - 变更文件：3
 
+## 2026-10-31 — feat: Wave2/3 完成——10 份笔记入库 + 吸收综合报告（六大能力 P0/P1/P2 提案 27 条）
+- 变更文件：15
+
