@@ -65,7 +65,7 @@
 
 ## 执行波次
 
-- **Wave 1（核心 8 仓精读）**：OmicsClaw · GenoAgent · CellAgent · OpenHands · MetaGPT · BixBench · Mem0 · BioMCP
+- **Wave 1（核心 8 仓精读）✅ 已完成（2026-10-31，8 份笔记见 absorb/，综合见 wave1-synthesis.md）**：OmicsClaw · GenoAgent · CellAgent · OpenHands · MetaGPT · BixBench · Mem0 · BioMCP
 - **Wave 2（结构研究 10 源）**：lm-eval-harness · LangGraph · AI-Scientist · aider · AutoGen · nf-core · Biomni · SWE-agent · ToolUniverse · PaperQA2
 - **Wave 3（要点级 15 源）**：其余全部（Letta/Hindsight/Cognee/claude-mem/Galaxy/GeneGPT/scAgent/ELAGT/AutoBA/BioMANIA/BRAD/geno_agent/bioskills/bio-* 族/scientific-agent-skills/crewAI/smolagents）
 
