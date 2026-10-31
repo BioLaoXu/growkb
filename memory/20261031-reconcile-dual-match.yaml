@@ -1,0 +1,17 @@
+id: mem-20261031-002
+type: knowhow
+scope: global
+task: 20261029_data-report-inhouseproject-2026-template
+trigger: >-
+  收件箱对账归档；卡与任务匹配
+content: >-
+  收件箱对账归档必须"批次+slug 双匹配"：仅按 slug 匹配会把同名 slug 的
+  不同批次需求误归档（实际事故：ATAC 数据报告卡被归档到 cut_tag 同名 slug 旧任务）
+evidence:
+  - 看板事故 2026-10-31（.ws/bin/ws_board.py 修复记录）
+  - .kb/docs/references/absorb/SYNTHESIS.md
+superseded: null
+hits: 1
+created: 2026-10-31
+last_verified: 2026-10-31
+expiration: null
