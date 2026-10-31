@@ -34,3 +34,6 @@
 ## 2026-10-31 — feat: Harness 评审专文（现状矩阵/七件详解/验证记录/求教清单 v2.3）+ P1 落地（ws_memory/ws_bench/事件契约）
 - 变更文件：3
 
+## 2026-10-31 — feat: Harness/RSI 前沿扫描——8 篇文章仓库提取（RRSI/Harness²/DGM/HGM/MemT/molten）+ 启示
+- 变更文件：2
+
