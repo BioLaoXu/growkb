@@ -13,3 +13,4 @@ scratch/
 # 嵌套 git 仓库（.kb/ 有独立远端 growkb，单独版本化）
 # 系统杂项
 # 运行时产物
+ima-export/
