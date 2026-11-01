@@ -87,6 +87,7 @@ ls -1t .inbox/*_dispatch.yaml 2>/dev/null | head -5
 5B. **经验沉淀（MEMEX）**（**防污染纪律**：只从用户消息与生产数据提炼；禁止把 Agent 自己的计划/自述当经验——防角色泄漏；入库一律走 `python3 .ws/bin/ws_memory.py add <条目.yaml>`，自动 MD5+语义双层去重；矛盾删除必须写 --reason）：任务 done 后按 `.kb/memory/_schema.md` 提炼 0-3 条经验写入 `.kb/memory/`（变更类写"转变前后"）；检索到 ≥3 条同类 → 提示升华进 `.kb/docs/methods/`；
 5C. **长任务断点续跑**：开工时建 `plan.md`（3-7 项勾选清单，模板 `.ws/templates/plan.md.tmpl`），规则：单次只完成一项、禁复活已取消项、阶段产物落盘即状态（重入先查 plan.md 跳过已完成）；
 5A. **收尾自评**：按 `.kb/docs/methods/report-scoring.md` 逐子步骤打分写入 META notes；总分 <0.8 不置 done；
+5A2. **收尾封印**：自评通过后用 `python3 .ws/bin/ws_meta.py seal <任务> --grade <总分>` 一键完成（status=done + report/tables/figures 只读 + .kb 知识快照烙印 + 回显收尾阶段 SOP）；之后如需改报告先 chmod 加回写权限并在 notes 记录原因；
 6. **环境预注入**：受理完成时核验生产目录（存在性、样本表/config.yaml/config 是否齐备），结果写入任务目录 `.env_check.yaml`；开工提示词必须引用"已核验环境清单"，禁止凭记忆假设数据位置；
 7. **勾选清单状态机**：开工/收尾会话的任务清单用 `[ ]`→`[✓]`→`[✗]` 标记并每步回显；单次回复只允许直接完成一项；禁止复活已取消项（违规拒绝执行并说明）；
 8. **NGS 黄金实践段**：开工提示词末尾附 `.kb/docs/methods/ngs-golden-practices.md` 的条目（按产品线勾选适用项）。

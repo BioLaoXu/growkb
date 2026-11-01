@@ -63,3 +63,14 @@
 
 见 `.kb/docs/references/agent-landscape-2026.md`（生信智能体 12 个 + 通用高星项目 10 个，
 含地址/能力点/对本项目的借鉴意义）。
+
+
+## 附录：条件触发项（2026-10-31 专家架构评审后新增）
+
+| 项 | 触发条件 | 内容 |
+|---|---|---|
+| rev 乐观锁推广 | 并发写 META 事故 ≥2 次 | ws_meta patch --expected-rev 已实现，推广给全部写路径 |
+| 上游 SHA256 阻断 | 生产数据漂移事故 ≥1 次 | .env_check.yaml 已记录指纹，升级为开工比对阻断 |
+| RRSI 外环启用 | 胶囊 ≥5 且经验 ≥10 | ws_rrsi.py 四子命令已就绪（plan-round/propose-sublimation/select-candidate/upgrade-evaluator-rqgm），含 HGM CMP 与 RQGM 评测器协同进化 |
+| LLM verifier 接入评分 | 胶囊基准跑通 3 次 | ws_bench grade 三梯度 v1 的第三层 |
+| 规则文件完整瘦身 | 阶段 SOP 运行稳定 1 个月 | 微内核 <120 行 + stage_*.md 门控（当前为过渡态：规则全文+阶段提示并存）|

@@ -46,37 +46,26 @@ def parse_card(path):
 def main():
     project = os.environ.get('CODEBUDDY_PROJECT_DIR') or os.getcwd()
     inbox = os.path.join(project, '.inbox')
-    cards = sorted(glob.glob(os.path.join(inbox, '*_dispatch.yaml')), reverse=True)
+
+    # 哨兵计数：收件箱待受理 + 活跃 wip（轻量 grep，不展开任何卡内容）
+    pending = len(glob.glob(os.path.join(inbox, '*_dispatch.yaml')))
+    wip = 0
+    for mp in glob.glob(os.path.join(project, 'projects', '*', '*', '*', '.meta.yaml')):
+        try:
+            if re.search(r'^status:\s*wip', open(mp, encoding='utf-8').read(), re.M):
+                wip += 1
+        except Exception:
+            pass
 
     if os.environ.get('KB_HOOK_DEBUG'):
-        sys.stderr.write('[check_inbox] project=%s cards=%d\n' % (project, len(cards)))
+        sys.stderr.write('[check_inbox] project=%s pending=%d wip=%d\n'
+                         % (project, pending, wip))
 
-    if not cards:
-        ctx = '收件箱 .inbox/ 当前无待受理的分析请求。'
-    else:
-        lines = ['.inbox/ 有 %d 张待受理的分析信息卡（最新在前）——'
-                 '用户说「受理」即按 README 第七节流程处理：' % len(cards)]
-        for card in cards[:5]:
-            info = parse_card(card)
-            lines.append('- [%s] 批次=%s 合同=%s 产品=%s 需求：%s（卡：%s）' % (
-                info.get('taskPath', '?'), info.get('batch', '?'),
-                info.get('contract', '?'), info.get('product', '?'),
-                info.get('request', ''), info['file']))
-        # 会话命名约定：样本批次号（IDE 标题取自首条消息，受理时带上批次号即可自动命名）
-        batch = ''
-        for card in cards[:5]:
-            b = parse_card(card).get('batch', '')
-            if b and b != '?':
-                batch = b
-                break
-        if batch:
-            lines.append('会话命名约定：本会话若用于受理任务，'
-                         '请提醒用户在首条消息带上批次号（如「受理 %s」），'
-                         '使 IDE 会话标题自动含批次号，便于历史检索；'
-                         'Agent 受理后也应主动按「批次号_产品」建议命名。'
-                         % batch)
-        ctx = '\n'.join(lines)
-        ctx = '\n'.join(lines)
+    # P1-02 单行计数哨兵：只报数，不展开卡内容——避免续跑/修复会话被收件箱劫持。
+    # 用户要求接单（说「查看收件箱」「受理」）时，Agent 再主动扫描并展开详情。
+    ctx = ('$$ Workspace Sentinel $$  Inbox pending: %d | Active WIP: %d —— '
+           '如需接单请说「查看收件箱」或「受理 <卡文件名>」；'
+           '与本任务无关的会话禁止主动展开收件箱详情。' % (pending, wip))
 
     output = {
         'continue': True,

@@ -166,9 +166,143 @@ def groups_of(tasks):
     return out
 
 
-if __name__ == '__main__':
-    import json
-    import sys
-    root = sys.argv[1] if len(sys.argv) > 1 else os.getcwd()
+def legacy_summary(root=None):
+    import json as _json
+    root = root or os.getcwd()
     projs, tks = scan(root)
-    print(json.dumps({'projects': projs, 'tasks': tks}, ensure_ascii=False, indent=2)[:2000])
+    print(_json.dumps({'projects': projs, 'tasks': tks}, ensure_ascii=False, indent=2)[:2000])
+
+# ================= P1-03 并发安全层（flock + 原子替换 + rev 乐观锁，移植自专家方案） =================
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+def atomic_patch_meta(task_meta_path, updates, expected_rev=None):
+    """并发安全的 META 增量修改：flock 排他 + rev 乐观锁 + os.replace 原子落盘。
+    updates: {字段: 新值}；expected_rev 不一致时拒绝（返回磁盘最新 rev）。
+    rev 计数存 <task>/.meta.rev（首次自动为 0）。"""
+    import fcntl
+    import tempfile
+    task_meta_path = os.path.abspath(task_meta_path)
+    tdir = os.path.dirname(task_meta_path)
+    lock_path = os.path.join(tdir, '.meta.lock')
+    rev_path = os.path.join(tdir, '.meta.rev')
+    with open(lock_path, 'w') as lf:
+        fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+        try:
+            with open(task_meta_path, encoding='utf-8') as fh:
+                text = fh.read()
+            cur_rev = 0
+            if os.path.exists(rev_path):
+                try:
+                    cur_rev = int(open(rev_path).read().strip())
+                except Exception:
+                    cur_rev = 0
+            if expected_rev is not None and expected_rev != cur_rev:
+                return {'ok': False, 'rev': cur_rev,
+                        'error': 'rev 不一致（磁盘=%d，预期=%d），拒绝覆写' % (cur_rev, expected_rev)}
+            for k, v in updates.items():
+                k = str(k)
+                v = str(v)
+                if re.search(r'^%s:' % re.escape(k), text, re.M):
+                    text = re.sub(r'^%s:.*$' % re.escape(k), '%s: %s' % (k, v), text, flags=re.M)
+                else:
+                    text = text.rstrip('\n') + '\n%s: %s\n' % (k, v)
+            fd, tmp = tempfile.mkstemp(dir=tdir, suffix='.tmp')
+            with os.fdopen(fd, 'w', encoding='utf-8') as fh:
+                fh.write(text)
+            os.replace(tmp, task_meta_path)
+            with open(rev_path, 'w') as fh:
+                fh.write(str(cur_rev + 1))
+            return {'ok': True, 'rev': cur_rev + 1, 'updated': sorted(updates)}
+        finally:
+            fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+
+
+def lock_artifacts_readonly(task_dir):
+    """P1-04：done/delivered 产物设为 OS 级只读（report.md + tables/ + figures/ 递归）。"""
+    import stat
+    locked = []
+    targets = [os.path.join(task_dir, 'report.md'),
+               os.path.join(task_dir, 'results', 'tables'),
+               os.path.join(task_dir, 'results', 'figures')]
+    for t in targets:
+        if not os.path.exists(t):
+            continue
+        if os.path.isfile(t):
+            mode = os.stat(t).st_mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
+            os.chmod(t, mode)
+            locked.append(os.path.relpath(t, task_dir))
+        elif os.path.isdir(t):
+            for root, dirs, files in os.walk(t):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    mode = os.stat(fp).st_mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
+                    os.chmod(fp, mode)
+                    locked.append(os.path.relpath(fp, task_dir))
+    return locked
+
+
+def load_stage_prompt(ws_root, new_status):
+    """P1-01 阶段门控：按新状态回显对应 SOP（stage_accept/wip/report）。"""
+    mapping = {'planned': 'stage_accept.md', 'wip': 'stage_wip.md', 'done': 'stage_report.md'}
+    rel = mapping.get(new_status)
+    p = os.path.join(ws_root, '.ws', 'prompts', rel) if rel else None
+    return open(p, encoding='utf-8').read().strip() if p and os.path.isfile(p) else None
+
+
+def kb_snapshot():
+    """P1-12 知识快照：当前 .kb 的 git HEAD（溯源烙印）。"""
+    import subprocess
+    kb = os.path.join(ROOT, '.kb')
+    try:
+        r = subprocess.run(['git', '-C', kb, 'rev-parse', '--short', 'HEAD'],
+                           capture_output=True, text=True, timeout=10)
+        return r.stdout.strip() or 'unknown'
+    except Exception:
+        return 'unknown'
+
+
+def seal_task(task_dir, grade=None):
+    """收尾封印：status=done（原子）+ 产物只读 + 知识快照 + 回显阶段 SOP。
+    grade<0.8 拒绝封印（评分协议）。"""
+    if grade is None or float(grade) < 0.8:
+        return {'ok': False,
+                'error': '评分协议：grade 缺失或 <0.8，不封印（先完成 report-scoring 自评）'}
+    r = atomic_patch_meta(os.path.join(task_dir, '.meta.yaml'),
+                          {'status': 'done', 'grade': grade, 'kb_snapshot': kb_snapshot()})
+    if not r.get('ok'):
+        return r
+    locked = lock_artifacts_readonly(task_dir)
+    prompt = load_stage_prompt(ROOT, 'done')
+    return {'ok': True, 'rev': r['rev'], 'locked_files': len(locked),
+            'kb_snapshot': r.get and kb_snapshot(), 'stage_hint': prompt}
+
+
+if __name__ == '__main__':
+    import argparse
+    ap = argparse.ArgumentParser(description='META 并发安全管理（flock+rev+原子替换）')
+    sub = ap.add_subparsers(dest='cmd', required=True)
+    pp = sub.add_parser('patch', help='原子增量修改 META 字段')
+    pp.add_argument('task')
+    pp.add_argument('--set', action='append', default=[], help='KEY=VALUE')
+    pp.add_argument('--expected-rev', type=int, default=None)
+    sl = sub.add_parser('seal', help='收尾封印：status=done + 产物只读 + 知识快照')
+    sl.add_argument('task')
+    sl.add_argument('--grade', required=True, help='评分协议总分（>=0.8 才允许）')
+    sp = sub.add_parser('stage-prompt', help='回显指定状态的阶段 SOP')
+    sp.add_argument('status')
+    sm = sub.add_parser('summary', help='旧版：输出全空间扫描 JSON')
+    sm.add_argument('--root', default=None)
+    import json
+    a = ap.parse_args()
+    if a.cmd == 'patch':
+        t = os.path.join(ROOT, a.task) if not os.path.isabs(a.task) else a.task
+        upd = dict(x.split('=', 1) for x in a.set)
+        print(json.dumps(atomic_patch_meta(t, upd, a.expected_rev), ensure_ascii=False))
+    elif a.cmd == 'seal':
+        t = os.path.join(ROOT, a.task) if not os.path.isabs(a.task) else a.task
+        r = seal_task(t, a.grade)
+        r['stage_hint'] = r.pop('stage_hint', None)
+        print(json.dumps(r, ensure_ascii=False))
+    elif a.cmd == 'stage-prompt':
+        print(load_stage_prompt(ROOT, a.status) or '（无对应阶段 SOP）')
+    elif a.cmd == 'summary':
+        legacy_summary(a.root if hasattr(a, 'root') else None)

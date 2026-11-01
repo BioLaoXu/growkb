@@ -48,10 +48,12 @@ def load_entry(path):
 
 def entries():
     out = []
-    for p in sorted(glob.glob(os.path.join(MEMDIR, '*.yaml'))):
+    for p in sorted(glob.glob(os.path.join(MEMDIR, '*.yaml')) +
+                    glob.glob(os.path.join(MEMDIR, '.staging', '*.yaml'))):
         d = load_entry(p)
         if d.get('id'):
             d['_path'] = p
+            d['_stg'] = '.staging' in p
             d['_norm'] = re.sub(r'\s+', ' ', str(d.get('content', ''))).lower().strip()
             d['_md5'] = hashlib.md5(d['_norm'].encode()).hexdigest()
             out.append(d)
@@ -92,12 +94,24 @@ def main():
                  ['UPDATE：ws_memory.py update %s --set content=<新文本>' % best['id'],
                   'DELETE（矛盾）：ws_memory.py delete %s --reason "…"' % best['id'],
                   '确属新知：重跑加 --update-conflict'])
-        dst = os.path.join(MEMDIR, os.path.basename(src))
+        # P1-11 反具体化门禁：knowhow 类禁止携带具体标识符（合同号/批次/日期/路径）
+        if str(e.get('type')) == 'knowhow':
+            spec = re.findall(r'(?:XJYF-|SP\d{6,})[\w\u4e00-\u9fa5]*|\b20\d{6}\b|/data/[\w/\-.]+',
+                              str(e.get('content', '')) + ' ' + str(e.get('trigger', '')))
+            if spec and '--allow-specific' not in args:
+                fail('add', 'knowhow 类经验含具体标识符：%s（经验必须泛化，案例细节留在 task 字段）' % spec[:3],
+                     ['改写为泛化规则后重试（例：把 XJYF-ATAC20260901 改成"该批次"）',
+                      '确需保留案例细节：改 type 为 pitfall 或加 --allow-specific'])
+        promote = '--promote' in args
+        staging = os.path.join(MEMDIR, '.staging')
+        os.makedirs(staging, exist_ok=True)
+        dst = os.path.join(MEMDIR if promote else staging, os.path.basename(src))
         open(dst, 'w', encoding='utf-8').write(open(src, encoding='utf-8').read())
         note = '强制新增（与 %s 相似度 %.2f）' % (best['id'], similar(norm, best['_norm'])) \
             if best and similar(norm, best['_norm']) >= 0.85 else None
-        print(json.dumps(contract('add', data={'id': e['id'], 'file': dst, 'note': note}),
-                         ensure_ascii=False))
+        status = 'formal' if promote else 'staging（正式化用 promote <文件名>）'
+        print(json.dumps(contract('add', data={'id': e['id'], 'file': dst,
+                              'status': status, 'note': note}), ensure_ascii=False))
 
     elif cmd == 'update':
         tid = args[0] if args else ''
@@ -161,14 +175,29 @@ def main():
                 x['hits'] = d['hits']
         data = [{'id': x['id'], 'type': x.get('type'), 'scope': x.get('scope'),
                  'trigger': x.get('trigger'), 'content': x.get('content'),
-                 'hits': x.get('hits', 0), '_score': sc} for sc, x in rows[:10]]
+                 'hits': x.get('hits', 0), 'staging': x['_stg'], '_score': sc}
+                for sc, x in rows[:10]]
         print(json.dumps(contract('search', data={'matches': data, 'count': len(data)}),
+                         ensure_ascii=False))
+
+    elif cmd == 'promote':
+        fname = args[0] if args else ''
+        src = os.path.join(MEMDIR, '.staging', os.path.basename(fname))
+        if not fname or not os.path.isfile(src):
+            fail('promote', 'staging 条目不存在：' + fname, ['ws_memory.py list 查看暂存条目'], False)
+        d = load_entry(src)
+        d['_'] = None
+        dst = os.path.join(MEMDIR, os.path.basename(fname))
+        save(dst, {k: v for k, v in d.items() if not k.startswith('_')})
+        os.remove(src)
+        print(json.dumps(contract('promote', data={'id': d.get('id'), 'file': dst}),
                          ensure_ascii=False))
 
     elif cmd == 'list':
         scope = args[0] if args and not args[0].startswith('-') else None
         data = [{'id': x['id'], 'type': x.get('type'), 'scope': x.get('scope'),
-                 'hits': x.get('hits', 0), 'last_verified': x.get('last_verified')}
+                 'hits': x.get('hits', 0), 'last_verified': x.get('last_verified'),
+                 'staging': x.get('_stg', False)}
                 for x in entries() if not scope or x.get('scope') == scope]
         print(json.dumps(contract('list', data={'entries': data, 'count': len(data)}),
                          ensure_ascii=False))

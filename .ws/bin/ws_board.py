@@ -351,12 +351,33 @@ class Handler(SimpleHTTPRequestHandler):
                     sd = mm.group(1).strip().strip(chr(39)).strip(chr(34)) if mm else ''
             env = {'source_dir': sd or None, 'source_dir_exists': bool(sd and os.path.isdir(sd))}
             for rel in ('sample.txt', 'group.txt', 'config.yaml'):
-                env[rel] = bool(sd and os.path.isfile(os.path.join(sd, rel)))
+                fp = os.path.join(sd, rel) if sd else ''
+                env[rel] = bool(fp and os.path.isfile(fp) and os.path.getsize(fp) > 0)
             if sd and env['source_dir_exists']:
                 try:
                     env['top_entries'] = sorted(os.listdir(sd))[:12]
                 except Exception:
                     env['top_entries'] = []
+                # P1-06 深度探针：broken symlink / 0-byte 文件 / 上游指纹（记录不阻断）
+                broken, zero = [], []
+                for root, dirs, files in os.walk(sd):
+                    for f in files:
+                        fp = os.path.join(root, f)
+                        if os.path.islink(fp) and not os.path.exists(fp):
+                            broken.append(fp.replace(sd + '/', '', 1))
+                        elif os.path.getsize(fp) == 0:
+                            zero.append(fp.replace(sd + '/', '', 1))
+                    if len(broken) > 20 or len(zero) > 20:
+                        break
+                env['broken_symlinks'] = len(broken)
+                env['zero_byte_files'] = len(zero)
+                if broken:
+                    env['broken_examples'] = broken[:5]
+                import hashlib as _h
+                key = os.path.join(sd, 'sample.txt')
+                if os.path.isfile(key):
+                    with open(key, 'rb') as fh:
+                        env['sample_txt_sha256_head64'] = _h.sha256(fh.read(65536)).hexdigest()[:64]
             import datetime as _dt
             env['checked_at'] = _dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             with open(os.path.join(ROOT, tp, '.env_check.yaml'), 'w', encoding='utf-8') as fh:
