@@ -81,6 +81,24 @@ bash .ws/bin/ws_receipt.sh -T <任务> -s accepted|done|delivered   # 写回执�
 bash .ws/bin/ws_pack.sh -T <任务>               # 打包（就地，排除元数据与软链）
 bash .ws/bin/ws_deliver.sh -T <任务>            # 同步生产目录（默认预演，-y 才写入）
 
+# 收尾封印（评分门禁 + 产物只读 + 知识快照 + 回显收尾 SOP）
+python3 .ws/bin/ws_meta.py seal <任务> --grade <总分>     # 总分>=0.8 才允许；之后报告/表/图只读
+python3 .ws/bin/ws_meta.py patch <任务>/.meta.yaml --set KEY=VALUE --expected-rev <N>  # 并发安全修改
+
+# 记忆（MEMEX）/ 评测（胶囊）/ 路由与校验
+python3 .ws/bin/ws_memory.py add <条目.yaml>|promote <文件>|search <词> --use|list   # add 默认入 .staging/
+python3 .ws/bin/ws_bench.py pack <任务> --name <slug>       # 任务→评测胶囊；grade 评分
+python3 .ws/bin/ws_env_skill_router.py build-index --ws-root .   # 方案路由索引
+python3 .ws/bin/ws_table_peek.py <数据表>                   # 大表防位置偏见摘要
+python3 .ws/bin/ws_bio_verifier.py --task-dir <任务>        # 证据键源表反查
+python3 .ws/bin/ws_run.py -- <命令...>                      # 进程组沙箱执行（超时连根清理）
+
+# 看板（动态：状态/筛选/受理/回收站/帮助文档）
+bash .ws/bin/ws_board.sh start|stop|restart     # 127.0.0.1:8792，cron 每 5 分钟守护
+
+# 迁移
+bash .ws/bin/ws_migrate.sh --to <新路径> | pack | deploy | handover   # 四模式见 --help
+
 # 知识库 / 备份
 bash .ws/bin/ws_kb.sh index|check|new|sync      # .kb 索引/体检/脚手架/推 growkb
 bash .ws/bin/ws_backup.sh                       # 元数据+脚本+工具区 tar（留 10 份）

@@ -312,7 +312,10 @@ tar xzf .ws/backup/ws-meta-<日期>.tar.gz -C /tmp/ws_restore_test && ls -R /tmp
 
 - 工作空间根已 git 化：版本化对象 = `.ws/bin` + `.ws/templates` + `.ws/docs` + `.codebuddy` + README/HANDOFF/CHANGELOG；**排除** projects/scratch（业务数据走 ws_backup）、`.ws/backup`、`.outbox`、`.kb`（独立仓库 growkb main 分支）
 - 远端：growkb 私库的 **`workspace` 分支**（`.kb/` 在同仓库的 `main` 分支，互不干扰）
-- 当前版本：**v2.0.0**（tag，2026-10-27 基线）——变更历史见 `CHANGELOG.md`
+- 当前版本：**v2.4.0**（2026-11-01）——变更历史见 `CHANGELOG.md`
+- 新增能力速览：一键发起 ws_dispatch、迁移四模式 ws_migrate、动态看板 ws_board（含回收站/帮助）、
+  MEMEX 经验记忆 ws_memory、胶囊基准 ws_bench、并发安全 META（ws_meta seal/patch）、
+  阶段门控 SOP（.ws/prompts/）、方案路由与生信校验（ws_env_skill_router/ws_bio_verifier/ws_table_peek）
 - 语义化规则：架构变更 → v3；加脚本/功能 → v2.x；修 bug → v2.0.x
 - **改架构铁律：动任何结构前先 `git commit`（或至少 `git stash`），改完回归验证再 commit——每改一步都有回滚点**
 
