@@ -1,0 +1,14 @@
+id: mem-stg-1
+type: knowhow
+scope: test
+task: t1
+trigger: 数据报告口径
+content: 数据报告的 promoter 口径必须与客户确认后再写入报告
+evidence: []
+superseded: null
+hits: 1
+created: 2026-10-31
+last_verified: '2026-11-01'
+expiration: null
+superseded_reason: 测试清理
+superseded_at: '2026-11-01'

@@ -1,0 +1,14 @@
+id: mem-stg-2
+type: knowhow
+scope: test
+task: t2
+trigger: 数据报告批次口径
+content: 数据报告涉及批次 XJYF-ATAC20260901 的 promoter 口径需客户确认
+evidence: []
+superseded: null
+hits: 1
+created: 2026-10-31
+last_verified: '2026-11-01'
+expiration: null
+superseded_reason: 测试清理
+superseded_at: '2026-11-01'

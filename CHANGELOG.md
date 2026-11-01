@@ -37,3 +37,6 @@
 ## 2026-10-31 — feat: Harness/RSI 前沿扫描——8 篇文章仓库提取（RRSI/Harness²/DGM/HGM/MemT/molten）+ 启示
 - 变更文件：2
 
+## 2026-11-01 — feat: 专家架构合并 v2.4.0——ws_meta 并发安全层/ws_memory 两级暂存+门禁/阶段 SOP/哨兵/探针/五新工具
+- 变更文件：3
+
