@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "NGS 分析智能体工作空间 · Harness v2.4",
+    "subtitle": "提示词四层注入 · 状态机五步 · 工具 25 件 · MEMEX 记忆 · 胶囊评测",
+    "output": "harness-architecture.html"
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "你（分析负责人）",
+      "sublabel": "投递/受理/审核/交付",
+      "pos": [
+        40,
+        60
+      ]
+    },
+    {
+      "id": "pwb",
+      "type": "external",
+      "label": "工作台 pwb",
+      "sublabel": "信息卡生成/回执对账",
+      "pos": [
+        800,
+        60
+      ]
+    },
+    {
+      "id": "inbox",
+      "type": "database",
+      "label": "收件箱 .inbox",
+      "sublabel": "pending/accepted/ignored",
+      "pos": [
+        420,
+        160
+      ]
+    },
+    {
+      "id": "outbox",
+      "type": "database",
+      "label": "回执 .outbox",
+      "sublabel": "accepted/done/delivered",
+      "pos": [
+        700,
+        160
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "security",
+      "label": "常驻规则 + Hooks",
+      "sublabel": "SessionStart/命名/护栏",
+      "pos": [
+        40,
+        290
+      ]
+    },
+    {
+      "id": "stage",
+      "type": "security",
+      "label": "阶段门控 SOP",
+      "sublabel": "accept/wip/report",
+      "pos": [
+        40,
+        400
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Agent 会话",
+      "sublabel": "CodeBuddy IDE · 受理/开工/收尾",
+      "pos": [
+        420,
+        290
+      ]
+    },
+    {
+      "id": "board",
+      "type": "backend",
+      "label": "ControlTower 看板",
+      "sublabel": ":8792 · cron 守护",
+      "pos": [
+        690,
+        290
+      ]
+    },
+    {
+      "id": "memory",
+      "type": "database",
+      "label": "MEMEX 经验记忆",
+      "sublabel": ".kb/memory + staging",
+      "pos": [
+        40,
+        510
+      ]
+    },
+    {
+      "id": "kb",
+      "type": "database",
+      "label": "知识库 .kb",
+      "sublabel": "methods/code/cli/docs",
+      "pos": [
+        190,
+        510
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "工具层 ws_* ×25",
+      "sublabel": "发起/感知/交付/质量/运维",
+      "pos": [
+        400,
+        510
+      ]
+    },
+    {
+      "id": "bench",
+      "type": "database",
+      "label": "胶囊基准",
+      "sublabel": ".bench/capsules",
+      "pos": [
+        560,
+        510
+      ]
+    },
+    {
+      "id": "meta",
+      "type": "security",
+      "label": "并发安全 META",
+      "sublabel": "flock+rev+seal",
+      "pos": [
+        720,
+        510
+      ]
+    },
+    {
+      "id": "tasks",
+      "type": "database",
+      "label": "任务树 projects",
+      "sublabel": "年/批次/任务",
+      "pos": [
+        420,
+        630
+      ]
+    },
+    {
+      "id": "prod",
+      "type": "external",
+      "label": "生产目录",
+      "sublabel": "上游数据（只读引用）",
+      "pos": [
+        190,
+        630
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "工作空间（整体可迁移单元）",
+      "wraps": [
+        "inbox",
+        "outbox",
+        "rules",
+        "stage",
+        "agent",
+        "board",
+        "memory",
+        "kb",
+        "tools",
+        "bench",
+        "meta",
+        "tasks"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "提示词四层注入",
+      "wraps": [
+        "rules",
+        "stage"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "pwb",
+      "to": "inbox",
+      "label": "信息卡投递",
+      "variant": "emphasis"
+    },
+    {
+      "from": "inbox",
+      "to": "agent",
+      "label": "哨兵计数注入",
+      "variant": "dashed",
+      "labelDy": 40
+    },
+    {
+      "from": "rules",
+      "to": "agent",
+      "label": "常驻+命名注入",
+      "variant": "dashed"
+    },
+    {
+      "from": "stage",
+      "to": "agent",
+      "label": "阶段 SOP",
+      "variant": "dashed"
+    },
+    {
+      "from": "agent",
+      "to": "tools",
+      "label": "确定性操作",
+      "variant": "emphasis"
+    },
+    {
+      "from": "tools",
+      "to": "tasks",
+      "label": "落盘",
+      "variant": "emphasis"
+    },
+    {
+      "from": "tools",
+      "to": "outbox",
+      "label": "三态回执",
+      "variant": "default"
+    },
+    {
+      "from": "agent",
+      "to": "memory",
+      "label": "检索/提炼",
+      "variant": "default"
+    },
+    {
+      "from": "kb",
+      "to": "agent",
+      "label": "方案/经验",
+      "variant": "dashed"
+    },
+    {
+      "from": "tasks",
+      "to": "bench",
+      "label": "pack 胶囊",
+      "variant": "dashed"
+    },
+    {
+      "from": "user",
+      "to": "board",
+      "label": "查看/点击",
+      "variant": "dashed",
+      "labelDy": -6,
+      "labelSegment": 0
+    },
+    {
+      "from": "board",
+      "to": "tools",
+      "label": "点击受理/交付",
+      "variant": "emphasis"
+    },
+    {
+      "from": "prod",
+      "to": "tasks",
+      "label": "上游数据",
+      "variant": "dashed"
+    },
+    {
+      "from": "meta",
+      "to": "tasks",
+      "label": "flock+rev 原子写",
+      "variant": "security"
+    }
+  ],
+  "cards": []
+}
