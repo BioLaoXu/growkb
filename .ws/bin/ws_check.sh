@@ -6,6 +6,7 @@
 # 检查项：
 #   1. 项目是否关联到生产目录、软链是否失效
 #   2. 任务是否缺 .meta.yaml、done/delivered 是否漏填 methods、是否空目录
+#      done/delivered 任务的 report.md 表格排版（数据行列数须与表头一致，防交付 HTML 列错位）
 #   3. 生产目录中尚未纳入工作空间的新项目
 #   4. 各项目磁盘占用（软链不计，验证"不拷贝大文件"是否执行到位）
 
@@ -98,8 +99,32 @@ if os.path.isdir(projects_dir):
             pr['year'] = str(meta.get('year') or '')
         projects.append(pr)
 
-issues = {'link': [], 'meta': [], 'todo': [], 'empty': []}
+issues = {'link': [], 'meta': [], 'todo': [], 'empty': [], 'table': []}
 task_total = 0
+
+
+def check_tables(path):
+    """report.md 表格排版检查：数据行列数须与表头一致（防交付 HTML 列错位）。
+    返回问题描述字符串或 None。转义竖线（\\|）视为普通字符。"""
+    lines = open(path, encoding='utf-8').read().splitlines()
+    i, tno, bad = 0, 0, []
+    while i < len(lines):
+        s = lines[i].strip()
+        if (s.startswith('|') and s.endswith('|') and i + 1 < len(lines)
+                and re.match(r'^\|[\s:|-]+\|$', lines[i + 1].strip())):
+            tno += 1
+            ncol = len([c for c in s.strip('|').split('|')])
+            i += 2
+            while i < len(lines) and lines[i].strip().startswith('|') and lines[i].strip().endswith('|'):
+                cells = lines[i].strip().strip('|').replace('\\|', '\x00').split('|')
+                if len(cells) != ncol:
+                    bad.append('表格%d 行%d 列数(%d)≠表头(%d)' % (tno, len(bad) + 1, len(cells), ncol))
+                    if len(bad) >= 3:
+                        return '；'.join(bad)
+                i += 1
+        else:
+            i += 1
+    return '；'.join(bad) if bad else None
 
 for pr in projects:
     b, sdir = pr['batch'], pr['dir']
@@ -131,6 +156,11 @@ for pr in projects:
         real = [f for f in os.listdir(tdir) if f != '.meta.yaml']
         if not real:
             issues['empty'].append('%s：只有 .meta.yaml，尚未开工' % rel)
+        rp = os.path.join(tdir, 'report.md')
+        if os.path.isfile(rp) and status in ('done', 'delivered'):
+            tb = check_tables(rp)
+            if tb:
+                issues['table'].append('%s：%s' % (rel, tb))
 
 print('══════ 工作空间体检报告 ══════')
 print('\n[1] 项目关联：共 %d 个项目，%d 个任务' % (len(projects), task_total))
@@ -141,7 +171,8 @@ else:
     print('    OK 全部项目已关联有效生产目录')
 
 print('\n[2] 元数据完整性')
-for key, label in (('meta', '缺 .meta.yaml'), ('todo', '应填未填'), ('empty', '未开工')):
+for key, label in (('meta', '缺 .meta.yaml'), ('todo', '应填未填'),
+                   ('empty', '未开工'), ('table', '报告表格错位')):
     if issues[key]:
         print('    %s（%d）：' % (label, len(issues[key])))
         for i in issues[key][:10]:

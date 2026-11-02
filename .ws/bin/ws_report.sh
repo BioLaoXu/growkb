@@ -112,7 +112,17 @@ def render(md_text):
             i += 2
             rows = []
             while i < len(lines) and re.match(r'^\|.*\|$', lines[i].strip()):
-                rows.append([c.strip() for c in lines[i].strip().split('|')])
+                # 行与表头同样 strip('|')，否则首尾多出空单元格导致整表列错位
+                cells = [c.strip() for c in lines[i].strip().strip('|').split('|')]
+                # 列数对齐表头：缺则补空、多则并入末列（保内容不丢失），并告警
+                if len(cells) != len(header):
+                    sys.stderr.write('[ws_report] WARN: 表格行列数(%d)与表头(%d)不一致: %s\n'
+                                     % (len(cells), len(header), lines[i].strip()[:80]))
+                    if len(cells) < len(header):
+                        cells += [''] * (len(header) - len(cells))
+                    else:
+                        cells = cells[:len(header) - 1] + [' | '.join(cells[len(header) - 1:])]
+                rows.append(cells)
                 i += 1
             out.append('<table><thead><tr>%s</tr></thead><tbody>%s</tbody></table>' % (
                 ''.join('<th>%s</th>' % inline(c) for c in header),
