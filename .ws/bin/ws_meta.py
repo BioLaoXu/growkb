@@ -260,9 +260,9 @@ def kb_snapshot():
         return 'unknown'
 
 
-def seal_task(task_dir, grade=None):
+def seal_task(task_dir, grade=None, no_memory=False):
     """收尾封印：status=done（原子）+ 产物只读 + 知识快照 + 回显阶段 SOP。
-    grade<0.8 拒绝封印（评分协议）。"""
+    grade<0.8 拒绝封印（评分协议）。附带记忆提炼检查（非阻断警告，P1-4.7b）。"""
     if grade is None or float(grade) < 0.8:
         return {'ok': False,
                 'error': '评分协议：grade 缺失或 <0.8，不封印（先完成 report-scoring 自评）'}
@@ -272,11 +272,33 @@ def seal_task(task_dir, grade=None):
         return r
     locked = lock_artifacts_readonly(task_dir)
     prompt = load_stage_prompt(ROOT, 'done')
-    return {'ok': True, 'rev': r['rev'], 'locked_files': len(locked),
-            'kb_snapshot': r.get and kb_snapshot(), 'stage_hint': prompt}
+    # 记忆提炼检查：本任务是否已有溯源经验（.kb/memory 含 .staging 全域搜任务 id）
+    tid = ''
+    mp = os.path.join(task_dir, '.meta.yaml')
+    if os.path.isfile(mp):
+        m = re.search(r'^id:\s*(\S+)', open(mp, encoding='utf-8').read(), re.M)
+        tid = m.group(1) if m else ''
+    extracted = False
+    if tid:
+        mem_dir = os.path.join(ROOT, '.kb', 'memory')
+        for p2 in glob.glob(os.path.join(mem_dir, '**', '*.yaml'), recursive=True):
+            try:
+                if tid in open(p2, encoding='utf-8').read():
+                    extracted = True
+                    break
+            except Exception:
+                pass
+    r2 = {'ok': True, 'rev': r['rev'], 'locked_files': len(locked),
+          'kb_snapshot': kb_snapshot(), 'stage_hint': prompt,
+          'memory_check': {'source_task': tid, 'extracted': extracted}}
+    if not extracted and not no_memory:
+        r2['memory_warning'] = ('本任务尚无提炼经验条目——请提炼 0-3 条（ws_memory.py add，'
+                                '默认进 staging）或确认确无新经验后加 --no-memory 重跑')
+    return r2
 
 
 if __name__ == '__main__':
+    import glob
     import argparse
     ap = argparse.ArgumentParser(description='META 并发安全管理（flock+rev+原子替换）')
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -284,9 +306,10 @@ if __name__ == '__main__':
     pp.add_argument('task')
     pp.add_argument('--set', action='append', default=[], help='KEY=VALUE')
     pp.add_argument('--expected-rev', type=int, default=None)
-    sl = sub.add_parser('seal', help='收尾封印：status=done + 产物只读 + 知识快照')
+    sl = sub.add_parser('seal', help='收尾封印：status=done + 产物只读 + 知识快照 + 记忆提炼检查')
     sl.add_argument('task')
     sl.add_argument('--grade', required=True, help='评分协议总分（>=0.8 才允许）')
+    sl.add_argument('--no-memory', action='store_true', help='申报本任务确无新经验（跳过提炼警告）')
     sp = sub.add_parser('stage-prompt', help='回显指定状态的阶段 SOP')
     sp.add_argument('status')
     sm = sub.add_parser('summary', help='旧版：输出全空间扫描 JSON')
@@ -299,7 +322,7 @@ if __name__ == '__main__':
         print(json.dumps(atomic_patch_meta(t, upd, a.expected_rev), ensure_ascii=False))
     elif a.cmd == 'seal':
         t = os.path.join(ROOT, a.task) if not os.path.isabs(a.task) else a.task
-        r = seal_task(t, a.grade)
+        r = seal_task(t, a.grade, no_memory=a.no_memory)
         r['stage_hint'] = r.pop('stage_hint', None)
         print(json.dumps(r, ensure_ascii=False))
     elif a.cmd == 'stage-prompt':
