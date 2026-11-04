@@ -28,7 +28,7 @@ while getopts ":T:d:yh" opt; do
   esac
 done
 
-[[ -n "$task_rel" ]] || usage_die "必须用 -T 指定任务相对路径，如 projects/cut_tag/2026/92512126902_mouse/20261026_peak-anno"
+[[ -n "$task_rel" ]] || usage_die "必须用 -T 指定任务相对路径，如 projects/cut_tag/2026/demo_batch_mouse/20261026_peak-anno"
 task_rel="${task_rel%/}"
 task_abs="$WS_ROOT/$task_rel"
 [[ -d "$task_abs" ]] || die "任务目录不存在：$task_rel"

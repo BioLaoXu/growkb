@@ -5,8 +5,8 @@
 #   ws_new_task.sh -P <project_rel_path> -t <slug> [-r <request>] [-s <status>] [-b <batch>] [-d <YYYYMMDD>] [-c <contract>]
 #   ws_new_task.sh -S -t <slug> [-r <request>]
 # 例：
-#   ws_new_task.sh -P projects/2026/92512126902_mouse -t peak-anno -r "重做peak注释"
-#   ws_new_task.sh -P projects/2026/92512126902_mouse -t peak-anno -d 20261101   # 自选日期前缀
+#   ws_new_task.sh -P projects/2026/demo_batch_mouse -t peak-anno -r "重做peak注释"
+#   ws_new_task.sh -P projects/2026/demo_batch_mouse -t peak-anno -d 20261101   # 自选日期前缀
 #
 # 说明：创建任务目录，内含 scripts/（脚本）与 results/（结果）两个固定子目录，
 #       以及 .meta.yaml。除此之外不要再建其他子目录。

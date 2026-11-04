@@ -6,7 +6,7 @@
 #                 [-t <slug>] [-d <YYYYMMDD>] [-y <year>] [-c <contract>] [-m <备注>]
 #   追加 -C：卡-only 模式（只投卡到 .inbox/，受理时才建项目/任务）
 # 例：
-#   ws_dispatch.sh -b 92512126902_mouse -p cut_tag -s 92512126902_mouse \
+#   ws_dispatch.sh -b demo_batch_mouse -p cut_tag -s demo_batch_mouse \
 #                 -r "用最新 TxDb 重做 peak 注释" -t peak-anno
 #
 # 流程：项目不存在则建 → 建任务 → 完整信息卡写入 .inbox/<日期>_<任务>_dispatch.yaml

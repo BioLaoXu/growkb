@@ -4,7 +4,7 @@
 # 用法：
 #   ws_new_project.sh -b <批次号> -p <product> [-y <year>] [-s <site> | -f <source_dir>] [-c <contract>] [-t <title>]
 # 例：
-#   ws_new_project.sh -b 92512126902_mouse -p cut_tag -s 92512126902_mouse
+#   ws_new_project.sh -b demo_batch_mouse -p cut_tag -s demo_batch_mouse
 #   ws_new_project.sh -b B20261027-001 -p rna -f /data/Report/rna_project_2026/SP001 -t "xx项目"
 #
 # 说明：
