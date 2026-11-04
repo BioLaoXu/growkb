@@ -67,10 +67,10 @@ link_if_absent() {
 }
 
 # 从生产项目目录名提取合同主编号（用于跨物种/跨批次聚合）
-# demo_batch_mouse      -> demo_batch
-# demo_batch_mouse_mouse_B1   -> demo_batch_mouse
+# demo_batch_mouse       -> demo_batch
+# demo_batch_mouse_B1    -> demo_batch
 # 20260921_demo_batch_SP -> demo_batch_SP
-# 20261019_XJYF-cuttag20260910 -> XJYF-cuttag20260910
+# 20261019_demo_batch_atac -> demo_batch_atac
 derive_contract() {
   local site="$1"
   if [[ "$site" =~ (SP[0-9]{5,}) ]];      then printf '%s\n' "${BASH_REMATCH[1]}"; return 0; fi
