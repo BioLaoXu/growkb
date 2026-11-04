@@ -53,8 +53,8 @@
 
 | 工作空间目录 | 生产目录（记在 .project.yaml，`.source` 软链指向） |
 |---|---|
-| `projects/2026/92512126902_mouse/` | `/data/Report/cut_tag_project_2026/92512126902_mouse` |
-| `projects/B20261027-001/` | `/data/Report/rna_project_2026/SP20260827008`（举例） |
+| `projects/2026/demo_batch_mouse/` | `/data/Report/cut_tag_project_2026/demo_batch_mouse` |
+| `projects/B20261027-001/` | `/data/Report/rna_project_2026/demo_batch_SP`（举例） |
 
 定位方式二选一：给 `site`（生产目录名）由脚本按 `/data/Report/<产品>_project_<年>/` 推导（年份缺省时依次尝试当年与近两年）；或直接给 `source_dir` 完整路径。产品类型参考值：`atac` / `chip` / `cut_tag` / `rna` / `LowVolumeRNA` / `m6A` / `cfRNA` / `multiOmics` / `InHouseProject` / `other`。
 
@@ -93,13 +93,13 @@
 
 ```yaml
 id: 20261027_peak-anno
-project: 2026/92512126902_mouse  # 年/批次号（= projects/ 下的相对路径）
-contract: 92512126902          # 受理时从 .project.yaml 带入，用于按合同聚合
+project: 2026/demo_batch_mouse  # 年/批次号（= projects/ 下的相对路径）
+contract: demo_contract          # 受理时从 .project.yaml 带入，用于按合同聚合
 product: cut_tag               # 受理时从 .project.yaml 带入（pwb 对账字段）
 batch: b01                     # 自动编号，b01/b02…；可用 -b 覆盖
 sample_batch: null             # 可选：样本批次（B1/B2）
 species: mouse                 # 可选：物种
-source_dir: /data/Report/cut_tag_project_2026/92512126902_mouse
+source_dir: /data/Report/cut_tag_project_2026/demo_batch_mouse
 created: 2026-10-26
 updated: 2026-10-26
 status: wip
@@ -146,7 +146,7 @@ planned ──▶ wip ──▶ done ──▶ delivered
 ## 五、标准作业流程
 
 ```
-1. 建项目  ws_new_project.sh -b 92512126902_mouse -p cut_tag -s 92512126902_mouse   # -y 缺省当年
+1. 建项目  ws_new_project.sh -b demo_batch_mouse -p cut_tag -s demo_batch_mouse   # -y 缺省当年
 2. 建任务  ws_new_task.sh -P <项目> -t peak-anno -r "客户需求"     ← 自动分配批次 b01
 3. 开工    scripts/ 写脚本，软链输入（input.*），results/ 出结果
 4. 收尾    补 methods / scripts / output，写 report.md（报告源稿），置 status: done
@@ -174,7 +174,7 @@ planned ──▶ wip ──▶ done ──▶ delivered
 
 | 脚本 | 作用 | 常用法 |
 |---|---|---|
-| `ws_new_project.sh` | 建批次号项目 + .project.yaml + 软链 | `-b 92512126902_mouse -p cut_tag -s 92512126902_mouse` |
+| `ws_new_project.sh` | 建批次号项目 + .project.yaml + 软链 | `-b demo_batch_mouse -p cut_tag -s demo_batch_mouse` |
 | `ws_new_task.sh` | 建任务（含 scripts/ results/） | `-P <项目> -t peak-anno -r "需求"`；`-d 20261101` 自选日期；`-S` 临时任务 |
 | `ws_index.sh` | 重建索引（含按合同聚合） | 无参数 |
 | `ws_find.sh` | 回溯检索 | `"motif"`、`-p cut_tag -s wip` |
@@ -199,11 +199,11 @@ CodeBuddy 持有执行环境。两者之间**不共享数据库**，靠一段固
 
 ```yaml
 【分析请求】
-batch: 92512126902_mouse     # 样本批次号（必填，= projects/<年>/ 下的一级目录名）
-contract: 92512126902        # 合同号（必填，pwb 对账字段）
+batch: demo_batch_mouse     # 样本批次号（必填，= projects/<年>/ 下的一级目录名）
+contract: demo_contract        # 合同号（必填，pwb 对账字段）
 product: cut_tag             # 产品（必填，.project.yaml 元数据）
-site: 92512126902_mouse      # 生产目录名（与 source_dir 二选一）
-source_dir: /data/Report/cut_tag_project_2026/92512126902_mouse   # 完整路径（与 site 二选一）
+site: demo_batch_mouse      # 生产目录名（与 source_dir 二选一）
+source_dir: /data/Report/cut_tag_project_2026/demo_batch_mouse   # 完整路径（与 site 二选一）
 species: mouse               # 物种（可选）
 sample_batch: B1             # 样本批次（可选，B1/B2）
 year: 2026                   # 可缺省，默认当年
@@ -212,7 +212,7 @@ date: 20261027               # 可缺省，任务日期前缀，默认当天
 request: >-                  # 客户需求原文（必填）
   用最新 TxDb 重做 peak 注释，补充 promoter 比例饼图
 inputs:                      # 可选：要软链的输入（生产路径 -> 任务内名字）
-  - /data/Report/cut_tag_project_2026/92512126902_mouse/voclano.R -> input.peaks.R
+  - /data/Report/cut_tag_project_2026/demo_batch_mouse/voclano.R -> input.peaks.R
 deadline: 2026-11-05         # 可选
 notes: promoter 定义为 TSS±3kb   # 可选：卡点/特殊口径
 ```
@@ -375,7 +375,7 @@ git push origin main:workspace --follow-tags   # 同步远端
 
 ## 十三、内置示例
 
-- `projects/2026/92512126902_mouse/` —— 批次号项目示例（`.project.yaml` + `.source` 软链 + `.notes.md`）。
-- `projects/2026/92512126902_mouse/20261027_peak-anno/` —— `b01` 批次、`wip` 状态，`scripts/01_peak_anno.R` + `results/` 一件产物 + 一个输入软链 + 打包产物（就地）。
+- `projects/2026/demo_batch_mouse/` —— 批次号项目示例（`.project.yaml` + `.source` 软链 + `.notes.md`）。
+- `projects/2026/demo_batch_mouse/20261027_peak-anno/` —— `b01` 批次、`wip` 状态，`scripts/01_peak_anno.R` + `results/` 一件产物 + 一个输入软链 + 打包产物（就地）。
 - `scratch/202610/20261026_oxm-theme-check/` —— 无合同归属的临时任务。
 - `.outbox/20261027_20261026_peak-anno_accepted.yaml` —— 回执示例（受理/完成/交付三种状态）。

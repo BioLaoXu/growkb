@@ -69,7 +69,7 @@ link_if_absent() {
 # 从生产项目目录名提取合同主编号（用于跨物种/跨批次聚合）
 # demo_batch_mouse      -> demo_batch
 # 92607012402_mouse_B1   -> 92607012402
-# 20260921_SP20260827008 -> SP20260827008
+# 20260921_demo_batch_SP -> demo_batch_SP
 # 20261019_XJYF-cuttag20260910 -> XJYF-cuttag20260910
 derive_contract() {
   local site="$1"

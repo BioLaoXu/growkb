@@ -19,7 +19,7 @@
 
 ```
 /data/Agent/xufa/workspace/
-├── projects/2026/92512126902_mouse/      # ★ 业务树：projects/<年>/<批次号>/
+├── projects/2026/demo_batch_mouse/      # ★ 业务树：projects/<年>/<批次号>/
 │   ├── .project.yaml                     #   项目元数据：product/year/site/source_dir/contract
 │   ├── .source -> /data/Report/...       #   生产目录软链（只读）
 │   ├── .notes.md  .index.md              #   备注 / 本批次任务清单（自动生成）
@@ -28,7 +28,7 @@
 │       ├── report.md                     #   报告源稿（收尾时写，收尾必填）
 │       ├── scripts/  results/            #   脚本 / 结果与图（含 results/report.html）
 │       ├── input.peaks.R -> /data/...    #   输入软链（不进交付包）
-│       └── 92512126902_peak-anno_20261027.tar.gz   # 交付包（就地生成）
+│       └── demo_contract_peak-anno_20261027.tar.gz   # 交付包（就地生成）
 ├── scratch/202610/...                    # 无合同归属的临时任务（结构同上）
 ├── .outbox/                              # 回执：accepted/done/delivered，给 pwb 对账
 ├── .inbox/                               # 收件箱：待受理的「项目信息卡」（pwb 可 scp 投递，Agent 新会话自动查收）
@@ -161,11 +161,11 @@ E:\CodeBuddy\install\CodeBuddy CN\bin\buddycn.cmd -n
 
 ```yaml
 【分析请求】
-batch: 92512126902_mouse     # ← sampleBatch 或生产目录名（必填，= projects/<年>/ 下目录名）
-contract: 92512126902        # ← contractNo（必填）
+batch: demo_batch_mouse     # ← sampleBatch 或生产目录名（必填，= projects/<年>/ 下目录名）
+contract: demo_contract        # ← contractNo（必填）
 product: cut_tag             # ← productName（必填）
-site: 92512126902_mouse      # ← 生产目录名（与 source_dir 二选一）
-source_dir: /data/Report/cut_tag_project_2026/92512126902_mouse   # 完整路径（二选一）
+site: demo_batch_mouse      # ← 生产目录名（与 source_dir 二选一）
+source_dir: /data/Report/cut_tag_project_2026/demo_batch_mouse   # 完整路径（二选一）
 species: mouse               # ← speciesName（可选）
 sample_batch: B1             # ← 样本批次（可选）
 year: 2026                   # 可缺省，默认当年
@@ -174,7 +174,7 @@ date: 20261027               # 可缺省，任务日期前缀，默认当天
 request: >-                  # ← analyzeRemark（必填，客户需求原文）
   用最新 TxDb 重做 peak 注释，补充 promoter 比例饼图
 inputs:                      # 可选：要软链的输入（生产路径 -> 任务内名字）
-  - /data/Report/cut_tag_project_2026/92512126902_mouse/voclano.R -> input.peaks.R
+  - /data/Report/cut_tag_project_2026/demo_batch_mouse/voclano.R -> input.peaks.R
 deadline: 2026-11-05         # ← limitTime（可选）
 notes: promoter 定义为 TSS±3kb   # 可选：卡点/特殊口径
 ```
@@ -208,11 +208,11 @@ notes: promoter 定义为 TSS±3kb   # 可选：卡点/特殊口径
 at: 2026-10-27 11:19:31
 status: accepted          # accepted | done | delivered
 taskId: 20261026_peak-anno
-taskPath: projects/2026/92512126902_mouse/20261027_peak-anno
-contractNo: 92512126902
+taskPath: projects/2026/demo_batch_mouse/20261027_peak-anno
+contractNo: demo_contract
 batch: b01
 productName: cut_tag
-packed: projects/.../92512126902_peak-anno_20261026.tar.gz   # delivered 时有值
+packed: projects/.../demo_contract_peak-anno_20261026.tar.gz   # delivered 时有值
 note: >-                  # 可选备注
 ```
 
@@ -248,7 +248,7 @@ note: >-                  # 可选备注
 
 ## 八、当前状态快照（2026-10-27）
 
-- 批次项目：`projects/2026/92512126902_mouse/`（cut_tag，contract 92512126902）
+- 批次项目：`projects/2026/demo_batch_mouse/`（cut_tag，contract demo_contract）
 - 任务：`20261027_peak-anno`（wip，含 report.html 与交付包示例）
 - 知识库种子：R 函数 `promoter_ratio`、CLI `kb_tsv_stats.py`、需求拆解文档 1 篇
 - growkb 私库：已同步（main @ 9bdcc0a+）
