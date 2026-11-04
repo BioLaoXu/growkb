@@ -14,3 +14,8 @@ scratch/
 # 系统杂项
 # 运行时产物
 ima-export/
+.bench/
+.trash/
+.inbox/
+.codebuddy/plans/
+.ws/.index.md
