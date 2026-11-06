@@ -47,7 +47,7 @@ for scope in projects scratch; do
 done >> "$list"
 
 # ② 工具区：管理脚本 + 模板（README 有规范可重建，但进了备份恢复更快）
-(cd "$WS_ROOT" && find .ws/bin .ws/templates -type f -print0) >> "$list"
+(cd "$WS_ROOT" && find .ws/bin .ws/templates -type f -not -path '*/__pycache__/*' -print0) >> "$list"
 
 # ③ 回执
 [[ -d "$WS_ROOT/.outbox" ]] && (cd "$WS_ROOT" && find .outbox -type f -name '*.yaml' -print0) >> "$list"
