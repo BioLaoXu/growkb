@@ -46,3 +46,6 @@
 ## 2026-11-01 — feat: Harness 清单人话版 v2.4 + 详细架构图（architecture 模式，14 组件/14 连接）
 - 变更文件：1
 
+## 2026-11-08 — feat: 接入 v4 harness——DisCo 三层技能包 mouse-peak-anno-promoter（SKILL/plan_skeleton/references/scripts）+ m1/m2 假设图记忆 + promoter_ratio.R 与 kb_tsv_stats.py 绑定代码 + 全库真实合同号脱敏（92512126902/XJYF-*/SP* → demo_*）
+- 变更文件：14
+

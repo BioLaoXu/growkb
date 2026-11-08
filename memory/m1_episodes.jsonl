@@ -1,0 +1,1 @@
+{"timestamp": "2026-11-08T12:19:25Z", "skill_id": "mouse-peak-anno-promoter", "invoked_code": ".kb/code/R/annotation/promoter_ratio.R", "invoked_cli": ".kb/cli/python/kb_tsv_stats.py", "r_code_only": 0.6, "r_skill_only": 0.65, "r_joint": 0.95, "synergy_w_ij": 0.3, "cost": 1.0}

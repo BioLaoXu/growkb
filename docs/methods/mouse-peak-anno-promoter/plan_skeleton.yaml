@@ -1,0 +1,29 @@
+skill_id: mouse-peak-anno-promoter
+area: Epigenomics
+family: Peak-Annotation-Promoter-Ratio
+product_codes:
+- ATAC-seq
+- ChIP-seq
+- CUT&Tag
+distilled_from_requirement: demo_batch_mouse-peak-anno.md
+bound_r_code: .kb/code/R/annotation/promoter_ratio.R
+bound_py_cli: .kb/cli/python/kb_tsv_stats.py
+preconditions:
+- param: txdb_version
+  description: GENCODE/TxDb 注释版本
+  rule: 必须明确指定版本（如 GENCODE_vM36），严禁默认旧版
+- param: promoter_window_kb
+  description: Promoter TSS 上下游窗口大小
+  rule: 凡客户提到 promoter，必须先确认 ±N kb（如 TSS±3kb），严禁默认按 ±1kb 开工
+canonical_steps:
+- step_id: S1_ANNO
+  title: 使用指定 TxDb 重跑 Peak 注释主表
+  bound_code: .kb/code/R/annotation/promoter_ratio.R
+  command_template: Rscript -e 'source(".kb/code/R/annotation/promoter_ratio.R")'
+    --txdb {txdb_version} --window {promoter_window_kb}
+  expected_output: tables/peak.anno.tsv
+- step_id: S2_RATIO
+  title: 调用标准库函数计算 Promoter 占比并生成统计摘要
+  bound_script: .kb/cli/python/kb_tsv_stats.py
+  command_template: python3 .kb/cli/python/kb_tsv_stats.py --input tables/peak.anno.tsv
+  expected_output: tables/promoter_ratio.tsv

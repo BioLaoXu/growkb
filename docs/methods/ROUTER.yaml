@@ -1,0 +1,21 @@
+taxonomy:
+- area: Epigenomics
+  family: Peak-Annotation-Promoter-Ratio
+  skill_id: mouse-peak-anno-promoter
+  product_codes:
+  - ATAC-seq
+  - ChIP-seq
+  - CUT&Tag
+  verified: true
+  bound_r_code: .kb/code/R/annotation/promoter_ratio.R
+  bound_py_cli: .kb/cli/python/kb_tsv_stats.py
+  keywords:
+  - promoter
+  - txdb
+  - peak
+  - 注释
+  - 饼图
+  - 占比
+  - epigenomics
+  - peak-annotation-promoter-ratio
+updated_at: '2026-11-08T12:19:24Z'

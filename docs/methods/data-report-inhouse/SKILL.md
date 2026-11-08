@@ -13,7 +13,7 @@ tags: [atac, cuttag, data-report, inhouse]
 
 - 卡片 request 含"研发数据总结/参考模板/已完成列"字样
 - 生产目录为标准流程产出（QC/Map/<PRODUCT>/ 三层），含 config 与 sample.txt
-- 参考：XJYF-cuttag20260908/20261028_data-report-inhouseproject-2026-template（首例）
+- 参考：demo_batch_cuttag/20261028_data-report-inhouseproject-2026-template（首例）
 
 ## Inputs
 
@@ -34,12 +34,12 @@ tags: [atac, cuttag, data-report, inhouse]
 ## Gotchas
 
 - summary.table.csv / GenomeCoverage.xls 是逐 bin 大表，**只取对应 png，不读内容**（来源：cut_tag 首例）
-- "已完成一列"指模板中的核对清单，不是分析结果列（来源：XJYF-cuttag20260908 任务澄清）
+- "已完成一列"指模板中的核对清单，不是分析结果列（来源：demo_batch_cuttag 任务澄清）
 
 ## Evidence
 
 - 模板：/data/Report/InHouseProject_2026/templates/（html）
-- 首例：projects/2026/XJYF-cuttag20260908/20261028_data-report-inhouseproject-2026-template/
+- 首例：projects/2026/demo_batch_cuttag/20261028_data-report-inhouseproject-2026-template/
 
 ## Outputs
 

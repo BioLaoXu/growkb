@@ -1,0 +1,42 @@
+{
+  "nodes": {
+    "mouse-peak-anno-promoter": {
+      "id": "mouse-peak-anno-promoter",
+      "type": "skill",
+      "n_sup": 8,
+      "n_ref": 0,
+      "confidence_c_i": 0.9,
+      "entropy_h2": 0.469,
+      "updated_at": "2026-11-08T12:19:25Z"
+    },
+    ".kb/code/R/annotation/promoter_ratio.R": {
+      "id": ".kb/code/R/annotation/promoter_ratio.R",
+      "type": "code",
+      "n_sup": 8,
+      "n_ref": 0,
+      "confidence_c_i": 0.9,
+      "entropy_h2": 0.469,
+      "updated_at": "2026-11-08T12:19:25Z"
+    },
+    ".kb/cli/python/kb_tsv_stats.py": {
+      "id": ".kb/cli/python/kb_tsv_stats.py",
+      "type": "cli",
+      "n_sup": 8,
+      "n_ref": 0,
+      "confidence_c_i": 0.9,
+      "entropy_h2": 0.469,
+      "updated_at": "2026-11-08T12:19:25Z"
+    }
+  },
+  "refines_edges": [],
+  "works_with_edges": [
+    {
+      "skill": "mouse-peak-anno-promoter",
+      "code": ".kb/code/R/annotation/promoter_ratio.R",
+      "cli": ".kb/cli/python/kb_tsv_stats.py",
+      "joint_success_rate": 0.95,
+      "synergy_gain_w_ij": 0.3,
+      "relation": "works-with (bidirectional)"
+    }
+  ]
+}

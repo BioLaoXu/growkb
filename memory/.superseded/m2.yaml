@@ -3,7 +3,7 @@ type: knowhow
 scope: test
 task: t2
 trigger: 数据报告批次口径
-content: 数据报告涉及批次 XJYF-ATAC20260901 的 promoter 口径需客户确认
+content: 数据报告涉及批次 demo_batch_atac 的 promoter 口径需客户确认
 evidence: []
 superseded: null
 hits: 1

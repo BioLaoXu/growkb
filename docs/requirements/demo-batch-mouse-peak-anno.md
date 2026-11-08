@@ -1,5 +1,5 @@
 ---
-batch: 92512126902_mouse
+batch: demo_batch_mouse
 tags: promoter, TxDb, peak注释
 ---
 # 需求拆解：peak 注释重做与 promoter 占比（20261027_peak-anno）

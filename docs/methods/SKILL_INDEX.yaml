@@ -1,0 +1,78 @@
+updated_at: 1794146804.6823459
+skills:
+- name: ATAC-seq Inhouse Differential Accessibility & Motif Report
+  version: 2.4.0
+  license: Internal-SOP
+  product_codes:
+  - ATAC-seq
+  - ChIP-seq
+  tags:
+  - atac
+  - peak
+  - differential
+  - motif
+  - chromatin
+  - 染色质开放性
+  - 差异峰
+  description: 'LOAD WHEN: Customer requests ATAC-seq or ChIP-seq quality control,
+    differential peak calling (DARs), genomic feature annotation (promoter/enhancer),
+    or TF motif enrichment summary from standard production output. SKIP WHEN: Single-cell
+    ATAC (scATAC-seq), multiome RNA+ATAC, or de novo genome assembly is requested.'
+  locked_params:
+    fdr_cutoff: 0.05
+    min_abs_log2fc: 1.0
+    min_replicates: 2
+  required_inputs:
+  - tables/diff_peaks.tsv
+  - tables/qc_summary.tsv
+  skill_id: data-report-atac-inhouse
+  path: /data/Agent/xufa/workspace/.kb/docs/methods/data-report-atac-inhouse/SKILL.md
+  load_when: Customer requests ATAC-seq or ChIP-seq quality control, differential
+    peak calling (DARs), genomic feature annotation (promoter/enhancer), or TF motif
+    enrichment summary from standard production output.
+  skip_when: Single-cell ATAC (scATAC-seq), multiome RNA+ATAC, or de novo genome assembly
+    is requested.
+- name: data-report-inhouse
+  displayName: InHouse 项目研发数据总结报告
+  version: 1.0.0
+  description: '使用时机：InHouse 系列批次（生产目录形如 InHouseProject_2026/<PRODUCT>/<site>）的 "研发数据总结"类需求——按参考模板整理各分析板块、核对已完成列、拟结论草稿。
+    不适用时：全新探索性分析或临床向报告，转 data-report-clinical（未建）。
+
+    '
+  tags:
+  - atac
+  - cuttag
+  - data-report
+  - inhouse
+  skill_id: data-report-inhouse
+  path: /data/Agent/xufa/workspace/.kb/docs/methods/data-report-inhouse/SKILL.md
+  load_when: '使用时机：InHouse 系列批次（生产目录形如 InHouseProject_2026/<PRODUCT>/<site>）的 "研发数据总结"类需求——按参考模板整理各分析板块、核对已完成列、拟结论草稿。
+    不适用时：全新探索性分析或临床向报告，转 data-report-clinical（未建）。
+
+    '
+  skip_when: ''
+- name: mouse-peak-anno-promoter
+  displayName: Peak-Annotation-Promoter-Ratio (mouse-peak-anno-promoter)
+  version: 1.0.0
+  area: Epigenomics
+  family: Peak-Annotation-Promoter-Ratio
+  product_codes:
+  - ATAC-seq
+  - ChIP-seq
+  - CUT&Tag
+  tags:
+  - ATAC-seq
+  - ChIP-seq
+  - CUT&Tag
+  - Epigenomics
+  - Peak-Annotation-Promoter-Ratio
+  - promoter
+  - TxDb
+  - peak注释
+  description: 'LOAD WHEN: 任务涉及 Peak-Annotation-Promoter-Ratio（如 Peak 注释重做、指定 TxDb
+    版本、计算 Promoter 比例饼图与统计表）。SKIP WHEN: 原始 FASTQ 比对或单细胞聚类分析。'
+  skill_id: mouse-peak-anno-promoter
+  path: /data/Agent/xufa/workspace/.kb/docs/methods/mouse-peak-anno-promoter/SKILL.md
+  load_when: 任务涉及 Peak-Annotation-Promoter-Ratio（如 Peak 注释重做、指定 TxDb 版本、计算 Promoter
+    比例饼图与统计表）。
+  skip_when: 原始 FASTQ 比对或单细胞聚类分析。

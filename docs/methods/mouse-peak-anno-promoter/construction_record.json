@@ -1,0 +1,40 @@
+{
+  "skill_id": "mouse-peak-anno-promoter",
+  "anchor_source": "demo_batch_mouse-peak-anno.md",
+  "three_layers": {
+    "knowledge_interface": "SKILL.md + plan_skeleton.yaml",
+    "knowledge_substrate": "references/demo_batch_mouse-peak-anno.md",
+    "execution_interface": ".kb/docs/methods/mouse-peak-anno-promoter/scripts/run_mouse_peak_anno_promoter_step.py"
+  },
+  "verification": {
+    "verified": true,
+    "checked_at": "2026-11-08T12:19:24Z",
+    "checks": [
+      {
+        "check": "layer_exists:SKILL.md",
+        "status": "pass"
+      },
+      {
+        "check": "layer_exists:plan_skeleton.yaml",
+        "status": "pass"
+      },
+      {
+        "check": "layer_exists:references/",
+        "status": "pass"
+      },
+      {
+        "check": "layer_exists:scripts/",
+        "status": "pass"
+      },
+      {
+        "check": "step_S1_ANNO_code:.kb/code/R/annotation/promoter_ratio.R",
+        "status": "pass"
+      },
+      {
+        "check": "smoke_cli:.kb/cli/python/kb_tsv_stats.py",
+        "status": "pass"
+      }
+    ],
+    "unresolved_gaps": []
+  }
+}

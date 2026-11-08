@@ -6,7 +6,7 @@ trigger: >-
   新建批次/项目目录命名；批次号含中文或特殊字符
 content: >-
   批次号含中文（如"微量"）会导致目录名兼容性风险：从 XJYF-微量ATAC20260901 改为
-  XJYF-ATAC20260901（纯 ASCII），原中文名记入 META notes 保留语义
+  demo_batch_atac（纯 ASCII），原中文名记入 META notes 保留语义
 evidence:
   - 用户明确要求转写纯 ASCII（2026-10-31）
   - .kb/docs/methods/data-report-inhouse/SKILL.md

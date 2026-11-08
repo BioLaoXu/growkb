@@ -9,7 +9,7 @@ content: >-
   results/tables 或 figures；迭代修改时同步移除失效键
 evidence:
   - PaperQA2 引用键正反例清单范式（.kb/docs/references/absorb/paper-qa.md）
-  - projects/2026/XJYF-cuttag20260908/20261028_data-report-inhouseproject-2026-template/report.md
+  - projects/2026/demo_batch_cuttag/20261028_data-report-inhouseproject-2026-template/report.md
 superseded: null
 hits: 0
 created: 2026-10-31

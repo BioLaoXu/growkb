@@ -77,7 +77,7 @@ def tsv_stats(df: "pd.DataFrame", columns: list[str] | None = None) -> dict:
 
 ```markdown
 ---
-batch: 92512126902_mouse
+batch: demo_batch_mouse
 tags: promoter, TxDb
 ---
 # 标题
