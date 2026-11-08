@@ -23,6 +23,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "write_to_file|edit_file|replace_in_file|execute_command|execute_bash|bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .ws/bin/ws_guard_hook.py pre-tool-use",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

@@ -185,6 +185,10 @@ planned ──▶ wip ──▶ done ──▶ delivered
 | `ws_deliver.sh` | 同步到生产目录（**默认预演**） | `-T <任务>` 预演，加 `-y` 才写入 |
 | `ws_check.sh` | 体检：关联/元数据/未纳入项目/空间 | 无参数 |
 | `ws_backup.sh` | 备份不可替代的元数据（见「九·容灾」） | 无参数；`-k 30` 保 30 份 |
+| `ws_disco_distill.py` | DisCo 四段式蒸馏：已交付任务 → 三层技能包（SKILL/plan_skeleton/references/scripts） | `distill-task ...`、`route --product X --request "..."` |
+| `ws_embodied_plan.py` | 零发散计划编译器：前置口径拦截 + plan.md 结构锁（`.plan_lock.json`） | `compile-plan`、`verify-plan-lock`、`record-trial` |
+| `ws_rrsi.py` | 自进化调度：L0 编辑预算/防泄漏/L2 成本锁/L1 剪枝 + `validate-tree` 出场铁律 | `plan-round`、`select-candidate`、`validate-tree` |
+| `ws_guard_hook.py` | PreToolUse 守卫：拦直写 META.yaml、rm -rf projects/、拦真值保险箱路径级访问（stdin 协议，fail-open） | 由 `.codebuddy/settings.json` hook 调用 |
 
 ---
 

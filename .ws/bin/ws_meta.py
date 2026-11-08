@@ -9,6 +9,7 @@
 
 import os
 import re
+from typing import Any, Dict, List  # noqa: E402
 
 LISTS = ('methods', 'input', 'output', 'scripts')
 STATUS_ORDER = {'wip': 0, 'blocked': 1, 'planned': 2, 'done': 3, 'delivered': 4}
@@ -296,6 +297,53 @@ def seal_task(task_dir, grade=None, no_memory=False):
                                 '默认进 staging）或确认确无新经验后加 --no-memory 重跑')
     return r2
 
+
+
+def dump_simple_yaml(data: Dict[str, Any]) -> str:
+    """零第三方依赖的标准 YAML 序列化器（兼容 PyYAML，若无 PyYAML 则使用内置确定性格式）。"""
+    try:
+        import yaml  # type: ignore
+        return yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
+    except ImportError:
+        lines: List[str] = []
+        for k, v in data.items():
+            if isinstance(v, (dict, list)):
+                lines.append(f"{k}: {json.dumps(v, ensure_ascii=False)}")
+            elif v is None:
+                lines.append(f"{k}: null")
+            elif isinstance(v, bool):
+                lines.append(f"{k}: {'true' if v else 'false'}")
+            elif isinstance(v, (int, float)):
+                lines.append(f"{k}: {v}")
+            else:
+                lines.append(f"{k}: {json.dumps(str(v), ensure_ascii=False)}")
+        return "\n".join(lines) + "\n"
+
+
+def load_simple_yaml(text: str) -> Dict[str, Any]:
+    try:
+        import yaml  # type: ignore
+        res = yaml.safe_load(text)
+        return res if isinstance(res, dict) else {}
+    except ImportError:
+        out: Dict[str, Any] = {}
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or ":" not in line:
+                continue
+            k, v = line.split(":", 1)
+            k = k.strip()
+            v = v.strip()
+            if not v or v == "null":
+                out[k] = None
+            elif v in ("true", "false"):
+                out[k] = (v == "true")
+            else:
+                try:
+                    out[k] = json.loads(v)
+                except Exception:
+                    out[k] = v.strip("'\"")
+        return out
 
 if __name__ == '__main__':
     import glob
