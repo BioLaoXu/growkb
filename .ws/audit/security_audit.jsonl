@@ -1,0 +1,1 @@
+{"timestamp": "2026-11-14T08:59:28Z", "actor_identity": "task_agent", "requested_scope": "v5_smoke", "post_auth_action": "bash -c echo \"token=${FAKE_TOKEN:-已剥离}\"", "details": {"returncode": 0, "scrubbed_secret_env_keys": ["FAKE_TOKEN"]}}

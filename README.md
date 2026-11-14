@@ -189,6 +189,10 @@ planned ──▶ wip ──▶ done ──▶ delivered
 | `ws_embodied_plan.py` | 零发散计划编译器：前置口径拦截 + plan.md 结构锁（`.plan_lock.json`） | `compile-plan`、`verify-plan-lock`、`record-trial` |
 | `ws_rrsi.py` | 自进化调度：L0 编辑预算/防泄漏/L2 成本锁/L1 剪枝 + `validate-tree` 出场铁律 | `plan-round`、`select-candidate`、`validate-tree` |
 | `ws_guard_hook.py` | PreToolUse 守卫：拦直写 META.yaml、rm -rf projects/、拦真值保险箱路径级访问（stdin 协议，fail-open） | 由 `.codebuddy/settings.json` hook 调用 |
+| `ws_open_science_wal.py` | 预执行意图日志 + 幂等重试核实（重跑前先查盘）+ 参数血缘绑定 + 凭据剥离执行 | `pre-exec`、`reconcile-retry`、`bind-lineage`、`scrub-env-run` |
+| `ws_rsiflow_diag.py` | 瓶颈诊断路由：局部错误→ARTIFACTS 任务内修，跨任务复发→HARNESS 改框架；失败也记账 | `diagnose`、`record-intervention` |
+
+**审查契约**：根目录 `REVIEW.md`（Anthropic 六层防御）——审查收敛四断路器（≤3 轮 / 第 2 轮起只审新增 Diff / Nit≤2 条 / 意见指纹幂等）与风险分级审批（Low 0 人 / Medium 1 人 / High 2 人，SHA 绑定失效）。
 
 ---
 

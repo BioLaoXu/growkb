@@ -459,7 +459,18 @@ class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         sys.stderr.write('[board] %s\n' % (fmt % args))
 
+class ReusableThreadingHTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = True  # 借鉴 v5：快速重启时不再被端口 TIME_WAIT 卡住（看板打不开假死）
+
 if __name__ == '__main__':
     os.chdir(ROOT)
+    if '--self-test' in sys.argv:  # 借鉴 v5：一次性自检（状态聚合无误即退出，供部署后验证）
+        tasks = scan_tasks()
+        cards, archived = list_cards()  # 单次调用：本函数自带对账归档副作用，不可重复调用
+        print(json.dumps({'ok': True, 'action': 'board.self_test',
+                          'tasks': len(tasks), 'inbox_cards': len(cards),
+                          'auto_archived': archived,
+                          'overview': overview(tasks, cards)}, ensure_ascii=False))
+        sys.exit(0)
     print('[ControlTower] http://%s:%d  (root=%s)' % (BIND, PORT, ROOT))
-    ThreadingHTTPServer((BIND, PORT), Handler).serve_forever()
+    ReusableThreadingHTTPServer((BIND, PORT), Handler).serve_forever()

@@ -71,6 +71,24 @@ def handle_pre_tool_use(tool_name: str, tool_input_json: str) -> None:
         }))
         sys.exit(2)
 
+    # 1b. srt 安全清单（借鉴 v5）：凭据目录路径级拒读——密码/凭据不过模型
+    def _touches_secret_dirs(txt: str) -> bool:
+        return any(p in txt for p in ("~/.ssh", "~/.aws", "/.ssh/", "/.aws/", ".ssh/id_", ".aws/credentials"))
+
+    if tool_name in _write_tools:
+        _hit2 = any(_touches_secret_dirs(str(params.get(k, ""))) for k in _path_params)
+    elif tool_name in ("execute_bash", "bash", "run_command", "execute_command", "read_file"):
+        _hit2 = _touches_secret_dirs(str(params.get("command", "")) or str(params.get("filePath", "")) or "")
+    else:
+        _hit2 = False
+    if _hit2:
+        print(json.dumps({
+            "ok": False,
+            "decision": "block",
+            "reason": "CREDENTIAL GUARD (srt checklist): Access to SSH/AWS credential paths is forbidden. Credentials must never enter the model context.",
+        }))
+        sys.exit(2)
+
     # 2. DGM 防自关幻觉检测铁律：禁止修改受保护的评测器与护栏脚本或伪造 .grade_receipt.json
     if tool_name in ("write_to_file", "edit_file", "replace_in_file", "execute_bash", "bash"):
         for kernel_f in SEALED_KERNEL_FILES:
